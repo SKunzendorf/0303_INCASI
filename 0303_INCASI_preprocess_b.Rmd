@@ -1,0 +1,526 @@
+---
+title: "0303_INCASI_preprocess_b"
+author: "Stella"
+date: "3 March 2018"
+output: html_document
+---
+
+
+### INCASI setup
+
+#### 1. General setup
+```{r INCASI_setup, message = FALSE}
+#--------------------------------------------------------------------------
+# Clear workspace
+rm(list=ls())
+
+#--------------------------------------------------------------------------
+# Set working directory
+getwd()
+setwd("/Volumes/StellaDisk/INCASI_desktop/01_Analysis/0303_INCASI") # Stella's laptop
+
+#--------------------------------------------------------------------------
+# Define paths
+path_wd 	 <- getwd()
+path_data <- paste(path_wd,"/_data/",sep="") 
+path_scripts  <- paste(path_wd,"/_scripts/",sep="")
+path_functions  <- paste(path_wd,"/_functions/",sep="") 
+path_dataframes <- paste(path_wd,"/_dataframes/",sep="") 
+path_variables <- paste(path_wd,"/_variables/",sep="")
+path_figures <- paste(path_wd,"/_figures/",sep="") 
+
+#--------------------------------------------------------------------------
+# load packages
+source(paste(path_scripts,"loadPackages.R",sep="")) # installed Rpackages
+
+#--------------------------------------------------------------------------
+# load settings for ggplot
+source(paste(path_scripts,"loadTheme.R",sep="")) # ggplot theme
+source(paste(path_scripts,"loadColors.R",sep="")) # ggplot colours
+
+#--------------------------------------------------------------------------
+# define list of participants
+inc_list <- as.factor(dir(path_data)) #create inc_list with all inc04 - inc50 
+
+#--------------------------------------------------------------------------
+# specify ECG sampling frequency (in Hz)
+ecg_sf <-  2048 # --> 1 datapoint every 0.4882812 ms (1000/2048)
+```
+
+
+####  2. Load dataframes for analysis: 
+```{r scripts analysis, message = FALSE}
+#----------------------------------------------------------------------------
+# dataframes for analysis encoding 
+load(paste(path_dataframes,"logfiles_all.RData", sep='')) # raw log_encode, log_recall, log_rate 
+load(paste(path_dataframes,"main_exg2_peaks_s_list.RData", sep='')) # ecg lead with peaks (sec)
+
+# load defined cardiac phases (created in templates_t_q)
+load(paste(path_dataframes,"fin_sys_dur_s.RData", sep="")) # load systole lengths from Rpeak until twave end (created in templates_t_q)
+load(paste(path_dataframes, "qonR_s.RData", sep="")) # load detected qwave-Rpeak lengths (created in templates_t_q)
+#----------------------------------------------------------------------------
+```
+
+
+#### 3. Prepare supplementary analysis of picture ratings
+* Load normative ratings from csv files
+* `emopics_norms`: df with normative valence and arousal ratings for each picture (180 pictures)
+```{r rating norm}
+#----------------------------------------------------------------------------
+# load normative data (norms_valence, norms_arousal) from EmoPics csv
+rate_pos <- read.csv(file = paste(path_variables, "EmoPics_pos.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+rate_pos$valence <- "positiv"
+rate_neu <- read.csv(file = paste(path_variables, "EmoPics_neu.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+rate_neu$valence <- "neutral"
+rate_neg <- read.csv(file = paste(path_variables, "EmoPics_neg.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+rate_neg$valence <- "negativ"
+
+emopics_norms <- rbind(rate_pos, rate_neu, rate_neg)
+
+#save(emopics_norms, file = paste(path_dataframes,"emopics_norms.RData", sep="")) # save emopic ratings
+#----------------------------------------------------------------------------
+```
+
+
+* Load experimental ratings from rating period
+* `c_rate_stim`: df with individual mean valence and arousal ratings for each picture
+* `rate_va`: joint dataframe of normative and individual ratings for arousal and valence
+```{r rating individual}
+#----------------------------------------------------------------------------
+## experimental ratings: mean valence and arousal ratings for each pic 
+m_rate_stim <- melt(log_rate, id = c("stimnum", "valence"), measure = c("rate_valence", "rate_arousal"))
+c_rate_stim <- cast(m_rate_stim, stimnum * valence ~ variable, mean, na.rm = T)
+
+# rate_va: join df with mean experimental + normative ratings for each picture
+# valence: rate_valence, norms_valence
+# arousal: rate_arousal, norms_arousal
+rate_va <- left_join(c_rate_stim, emopics_norms[1:3], by = c('stimnum'))
+
+# save(rate_va, file = paste(path_dataframes,"rate_va.RData", sep="")) # save rate_va
+#----------------------------------------------------------------------------
+```
+
+
+#### 4. Prepare supplementary analysis of covariates
+* Age
+* Interoceptive Accuracy (IA)
+* Trait anxiety (STAI)
+* Heart Rate Variability (HRV: mean RR, rmssd)
+
+```{r analyse covariates}
+#--------------------------------------------------------------------------
+# load dataframes
+## age
+data_age <- read.csv(file = paste(path_variables, "INCASI_age.csv", sep=""), header=TRUE, sep = ';', dec = ",")  # hbp score df
+
+## IA
+load(paste(path_dataframes, "score.RData", sep="")) # hbp score df
+
+## HRV
+# a. read mean HR, rmssd, mean R-R (from main file = experimental period)
+kubios_main <- read.csv(file = paste(path_variables, "data_kubios_main.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+
+# b. read mean HR, rmssd, mean R-R (from main file = resting period)
+kubios <- read.csv(file = paste(path_variables, "data_kubios_rest.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+
+# save(kubios, file = paste(path_dataframes,"kubios.RData", sep="")) # save kubios
+
+## STAI
+stai <- data.frame(read.csv(file = paste(path_variables, "STAIT.csv", sep=""), header=TRUE, sep = ';', dec = ","))
+stai$stai_sum <- rowSums(stai[2:length(stai)])
+stai <- stai[!stai$vp == "inc48",] # exclude participant inc_48 (extrasystoles) to fit inc_list
+
+# save(stai, file = paste(path_dataframes,"stai.RData", sep="")) # save stai
+
+#--------------------------------------------------------------------------
+# function flex_medsplit
+# function to compute median split
+# df: dataframe containing column to create median split on
+# colname: name of column in df to compute median split on
+# list: vector of participants
+flex_medsplit <- function(df, colname, list, plot = F) {
+
+  # 1. compute medsplit 
+    vec <- as.numeric(df[[colname]]) # create vector (column named colname in df) to compute medsplit on
+    median_vec <- median(vec, na.rm = T)  # calculate median of vector vec
+    split = cut_number(vec, n = 2, na.rm = T, labels = c("below", "above")) # cut number of vector elements in equal groups, label them "above", "below"
+    
+  # 2. create dataframe medsplit  
+    medsplit <- data.frame(
+      vp = list,
+      score = vec,
+      medsplit = split
+    )
+    
+    # 3. check if medsplit contains two equal parts
+    if (length(split[split == "below"]) != length(split[split == "above"])) {
+      message("medsplit is not equal:", "Below:", sum(vec < median_vec, na.rm=T), "Above:", sum(vec >= median_vec, na.rm=T))
+      split[which(vec == median_vec)] <-  NA # exclude median_vec from medsplit factor
+    }
+  
+  # 4. plot medsplit
+  if (plot == T) {
+    plot_medsplit <- ggplot(data = medsplit, aes(x= vp, y = vec, colour = medsplit)) +
+      scale_colour_manual(values=c(defmedblue, deforange)) +
+      geom_point(na.rm = T) +
+      geom_abline(intercept = median_vec, slope = 0) +
+      ggtitle(paste("Mediansplit", colname, "for: ", deparse(substitute(list))))+
+      labs(x = "Participants", y = colname) 
+    print(plot_medsplit)
+  }
+  
+  # 5. return dataframe df_subs with column medsplit
+  colnames(medsplit) <- c("vp", paste(colname, "_score", sep = ""), paste(colname, "_medsplit", sep = ""))
+  return(medsplit)
+}
+
+#--------------------------------------------------------------------------
+split_IA <- flex_medsplit(score, colname = "IA", inc_list, plot = T)
+split_stai <- flex_medsplit(stai, colname = "stai_sum", inc_list, plot = T)
+split_rmssd <- flex_medsplit(kubios, colname = "rmssd_rest", inc_list, plot = T)
+
+data_var <- join_all(list(split_IA, split_stai, split_rmssd), by = c("vp")) # df containing all variables
+#--------------------------------------------------------------------------
+```
+
+
+# 1. PREPARE LONG DATAFRAME: LOG_ENCODE
+
+1.A. Determine systolic time intervals (STI) based on regression equations (Weissler, 1968)
+
+1.B. Analysis of behaviour relative to heartbeat
+**`log_encode`**: edit log_encode (one row per trial)
+* `main_exg2_peaks_s_list`: create list with time points from R peaks for each participant
+* `main_exg2_dtp`: create list with complete ecg leads for each participant
+
+
+## 1.A. Compute Regression equations (Weissler, 1968) to determine Systolic time intervals
+
+* Definition of STI (systolic time intervals)
+* *QS2 = PEP + LVET*: the whole electromechanical systole, start: beginning of qRs complex (depolarization ventricles), end: closure of the aortic valve (end of systolic blood outflow)
+* *PEP*: Pre-ejection period: itnerval from onset of ventricular depolarization to beginning of ventricular ejection
+* *LVET*: phase of systole during which blood is ejected into the arterial sysytem (beginning of upstroke to trough of incisurila notch on external carotid arterial pulse)
+
+* Systolic phases of cardiac cycle vary inversly with HR -> corrections for variation in heart rates required
+* Regression equations relate each of the STI to the HR
+* Most widely applied those by Weissler, Harris and Schoenfeld (1968):  recorded in normal subjects with wide range of resting HR
+
+```{r function callsti}
+# create function to calculate systolic time intervals (STI) based on Weissler regression equations (1968)
+
+# function callsti
+# x = mean participant HR in bpm
+# df = dataframe (e.g. log_encode, log_recall)
+# ivar = iteration variable (iclick, ipic)
+
+callsti <- function (x, df, ivar) {
+  gen <- df$gender[ivar] # gender
+  if (gen == "m") { # STI for male
+  lvet <- ((-1.7 * x) + 413) / 1000
+  pep <- ((-0.4 * x) + 131) / 1000
+  qs2 <- ((-2.1 * x) + 546) / 1000
+  } else {  # STI for female
+    lvet <- ((-1.6 * x) + 418) / 1000
+    pep <- ((-0.4 * x) + 133) / 1000
+    qs2 <- ((-2.0 * x) + 549) / 1000
+    }
+  sit_vec <- c(pep, lvet, qs2)
+  names(sit_vec) <- c("pep", "lvet", "qs2")
+  return(sit_vec)
+}
+```
+
+
+
+## 1.B. Analysis of behaviour relative to heartbeat
+
+### 1.B.1. Define relative timepoint within R-R interval, length of R-R interval, and heart rate for each key press
+
+* What's the time of the Rpeak just before each key press (click1onset)?
+```{r add var log_encode Rtend}
+#--------------------------------------------------------------------------
+#define variables for loop (if main_exg2_peaks_s, meain_exg2_dtp are not yet created) -> otherwise already loaded (see above)
+# main_exg2_peaks_s <- NULL # create list to contain Rpeaks for each participant (vp)
+# main_exg2_peaks_s_list <- NULL
+main_exg2_dtp <- list() # create list to contain single ecg leads for each vp
+
+#--------------------------------------------------------------------------
+## 1. define relative timepoint, R-R interval, and heart rate for each click
+for (part in inc_list[1:length(inc_list)]) {  # loop over participants
+  
+  ## a) create main_exg_2 lists (if not created)
+  # # Read single lead with dtp for each vp
+  main_exg2_dtp[[part]] <- read.table(paste(path_data, part, '/crop/Kubios/', part, '_main_exg2.txt', sep = ''))
+  # 
+  # # Read time points from R peaks Kubios output
+  # main_exg2_peaks_tmp <- NULL
+  # main_exg2_peaks_tmp <- readMat(paste(path_data, part, '/crop/Kubios/', part, '_main_exg2_hrv.mat', sep = '')) # read Kubios matlab output into R
+  # main_exg2_peaks_s <- as.vector(main_exg2_peaks_tmp$Res[[4]][[2]][[2]]) # extract tmp from Res structure in  matlab
+  # main_exg2_peaks_s_list[[part]] <- main_exg2_peaks_s
+
+  ## b) load main exg_2 (if already created)
+  main_exg2_peaks_s <- main_exg2_peaks_s_list[[part]] # select list of Rpeaks for part
+  
+  #--------------------------------------------------------------------------
+  run = min(which(log_encode$vp == part)) - 1 # create run variable to loop over respective rows for each vp
+  for (iclick in (run+1):(run+length(log_encode$click1onset_ecgtime_s[log_encode$vp == part]))) {   # loop over 120 clicks for each vp
+
+    #--------------------------------------------------------------------------
+    # position of Rpeak before each key press (click1onset) timepoint
+    clickon <- log_encode$click1onset_ecgtime_s[iclick] # timepoint of click
+    log_encode$position[iclick] <-  max(which(main_exg2_peaks_s < clickon)) # select timepoints of Rpeaks right before clickonsets
+    position <- log_encode$position[iclick] 
+    
+    #--------------------------------------------------------------------------
+    # RR intervals of click (in sec): (position of Rpeak before click = position)
+    log_encode$R_R_s[iclick] <- (main_exg2_peaks_s[position+1] - main_exg2_peaks_s[position]) # RR around click: calculate length of R-R-interval (one cardiac cycle)
+    
+    #--------------------------------------------------------------------------
+    # compute beat to beat heart rate: R-R intervals, HR
+    log_encode$HR_1perMin[iclick] <- (60 / log_encode$R_R_s[iclick]) # click to click heart rate: HR_1permin = 60 / diff.R-R (in bpm)
+
+    log_encode$HR_1perSec[iclick] <- (1 / log_encode$R_R_s[iclick]) # heart rate: HR_1perSec = 1 / diff.R-R (in Hz)
+    
+    #--------------------------------------------------------------------------
+    # for each clickonset: calculate difference to preceding R peak (in sec) -> create column diff_click_peak_s
+    log_encode$diff_click_peak_s[iclick] <- (clickon - main_exg2_peaks_s[position]) 
+  }
+}    
+
+#--------------------------------------------------------------------------
+#save list with Rpeaks from Kubios output: 
+#save(main_exg2_peaks_s_list, file = paste(path_dataframes,"main_exg2_peaks_s_list.RData", sep=''))
+
+#save list with complete ecg leads for each vp:
+#save(main_exg2_dtp, file = paste(path_dataframes,"main_exg2_dtp.RData", sep=""))
+#--------------------------------------------------------------------------
+```
+
+
+### 1.B.2. Define circular onset and cardiac phase of each key press
+
+Analyse key press relative to the heartbeat (1. circular and 2. binary analysis)
+
+  1. Circular
+  
+  * Compute relative phase of click1onset within R-R interval, assigning values btw. 0 and 2pi (log_encode$radclick)
+  
+  2. Binary
+  
+  * In which cardiac phase do clicks fall - in systole (ejection-phase: sys1, sys2), diastole   (dias1, dias2, dias3, dias4), or non-defined (pre-ejection period, security window between systole and diastole)?
+
+
+For binary analysis: Cardiac cycle is segmented into several intervals:
+* qonR: interval from qwave onset until Rpeak (=qonR_s)
+* crop: interval from Rpeak to end of pep (pep = qonR_s + crop)
+* Rtend: Interval from Rpeak to twave end (here, end of systole)
+* syspat: Rtend minus crop: ejection period until twave end (without pre-ejection) = lvet
+* sys1: first half of ejection period (length: 0.5 * syspat)
+* sys2: second half of ejection period (length: 0.5 * syspat)
+
+* pep: pre-ejection period (starting from q wave)
+* lvet: ventricular ejection time (qs2 - pep) = syspat
+
+* diaspat: remaining diastole (R-R - syspat - qs2)
+* dias1 to dias4: diastolic bins of same length (lenght: 0.25 * diaspat)
+
+Two cardiac phases are defined as systole, diastole:
+* 2 intervals in systole:  sys1, sys2 (ejection until twave end)
+* 4 intervals in diastole: dias1, dias2, dias3, dias4
+* non-defined cardiac intervals: pep (pre-ejection), 50ms window between systole and diastole
+
+```{r add var log_encode Rtend}
+#--------------------------------------------------------------------------    
+## Run circular and binary analysis
+
+for (part in inc_list[1:length(inc_list)]) {  # loop over participants
+
+  run = min(which(log_encode$vp == part)) - 1 # create run variable to loop over respective rows for each vp
+  for (iclick in (run+1):(run+length(log_encode$click1onset_ecgtime_s[log_encode$vp == part]))) {   # loop over 120 clicks for each vp
+  
+    #--------------------------------------------------------------------------
+    dif <- log_encode$diff_click_peak_s[iclick] # vector dif with time interval from each click to preceding R (sec)
+
+    # 1. CIRCULAR: transform dif (sec) into radian = relative phase of click1onset within cardiac cycle: 2 * pi * (HR_1permin/60) * (diff_click_peak_s)
+    log_encode$radclick[iclick] <- (2 * pi * (log_encode$HR_1perSec[iclick]) * (dif)) 
+    dif_rad <- log_encode$radclick[iclick] 
+
+    #--------------------------------------------------------------------------
+    # 2. BINARY: check in which cardiac intervals clicks fall
+    
+    # a) define systolic time intervals (STI)
+    x <-  mean(log_encode$HR_1perMin[log_encode$vp == part])  # mean heart rate 
+    sitvec <- callsti(x, log_encode, iclick) # vector with systolic intervals (calculated from qwave)
+    
+    log_encode$pep[iclick] <- sitvec["pep"] # pre-ejection period 
+    log_encode$qonR[iclick] <- qonR_s[part] # difference from qonset to R
+    
+    # transfer STI to intervals that start from Rpeak (not qwave) -> substract distance qonR
+    log_encode$crop[iclick] <- sitvec["pep"] - qonR_s[part] # crop: pre-ejection period from Rpeak, substract q
+    log_encode$Rtend_s[iclick] <- sys_dur_s[part] #interval from R to tend
+    log_encode$syspat[iclick] <- log_encode$Rtend_s[iclick] - log_encode$crop[iclick] # systolic ejection-period 
+    
+    # add 50ms security window (x) between systole end and start of diastole
+    syspatx <- log_encode$syspat[iclick] + 0.05 # add security window of 0.05 (50ms) btw. systole and diastole
+    Rtendx <- log_encode$Rtend_s[iclick] + 0.05
+    
+    # define diastole = RR - (syspatx + pep)
+    log_encode$diaspat[iclick] <- log_encode$R_R_s[iclick] - (sitvec["pep"] + syspatx) 
+    
+    crop <- log_encode$crop[iclick] # pep - qonR
+    syspat <- log_encode$syspat[iclick]  # Rtend - crop
+    diaspat <- log_encode$diaspat[iclick] # remaining diastole
+    
+    # b) define in which intervals click falls
+    # click in systole (bin syspat in two intervals sys1, sys2 of same size)
+    log_encode$click_sys1[iclick] <-  as.numeric((dif <= (crop + 0.5*syspat)) & (dif > crop)) #sys1
+    log_encode$click_sys2[iclick] <-  as.numeric((dif <= (crop + syspat)) & (dif > (crop + 0.5 * syspat))) #sys2
+
+    # click in diastole
+    log_encode$click_dias1[iclick] <- as.numeric((dif > Rtendx) & (dif <= (Rtendx + 0.25*diaspat)))
+    log_encode$click_dias2[iclick] <- as.numeric(dif > (Rtendx + 0.25*diaspat) & (dif <= (Rtendx + 0.5*diaspat)))
+    log_encode$click_dias3[iclick] <- as.numeric(dif > (Rtendx + 0.5*diaspat) & (dif <= (Rtendx + 0.75*diaspat)))
+    log_encode$click_dias4[iclick] <- as.numeric(dif > (Rtendx + 0.75*diaspat) & (dif <= Rtendx + diaspat))
+    
+    # click in non-defined
+    log_encode$click_pep[iclick] <- as.numeric((dif <= crop) | (dif > (Rtendx + diaspat))) #pep
+    log_encode$click_x[iclick] <-  as.numeric((dif <= Rtendx) & (dif > (crop + syspat))) # security window
+    
+    # click_bin
+    if (log_encode$click_pep[iclick] == 1) {
+    log_encode$click_bin[iclick] <- "click_pep"
+  } else if (log_encode$click_sys1[iclick] == 1| log_encode$click_sys2[iclick] == 1) {
+    log_encode$click_bin[iclick] <- "click_lvet"
+  } else if (log_encode$click_dias1[iclick] == 1| log_encode$click_dias2[iclick] == 1 |  log_encode$click_dias3[iclick] == 1 |  log_encode$click_dias4[iclick] == 1) {
+    log_encode$click_bin[iclick] <- "click_dias"
+  } else {
+    log_encode$click_bin[iclick] <- "click_x"}
+    
+    # column total electromechanical systole (pep + ejection-period)
+  log_encode$allsys[iclick] <- log_encode$pep[iclick] + log_encode$syspat[iclick] # allsys = pep + syspat
+  log_encode$alldias[iclick] <- log_encode$diaspat[iclick] # alldias = diaspat
+  
+    }
+}
+
+#--------------------------------------------------------------------------
+```
+
+
+### 1.B.3. Define cardiac phases of hits, misses
+
+* Analysis recognition (hit, miss), relative to phase of stimulus onset in encoding 
+```{r add recognition parameters to log_encode}
+
+# create new columns to check det = HIT, MISS relative to CLICK: sys vs. dias, dias_bin
+log_encode$hit_pep <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_pep == 1)) # hits in pep
+log_encode$hit_sys1 <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_sys1 == 1)) # hits in sys
+log_encode$hit_sys2 <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_sys2 == 1)) # hits in sys
+log_encode$hit_x <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_x == 1)) # hits in x
+
+log_encode$hit_dias1 <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_dias1 == 1)) # hits in dias
+log_encode$hit_dias2 <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_dias2 == 1)) # hits in dias
+log_encode$hit_dias3 <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_dias3 == 1)) # hits in dias
+log_encode$hit_dias4 <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_dias4 == 1)) # hits in dias
+
+log_encode$miss_pep <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_pep == 1))# miss in pep
+log_encode$miss_sys1 <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_sys1 == 1)) # miss in sys
+log_encode$miss_sys2 <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_sys2 == 1)) # miss in sys
+log_encode$miss_x <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_x == 1)) # miss in x
+
+log_encode$miss_dias1 <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_dias1 == 1)) # miss in dias
+log_encode$miss_dias2 <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_dias2 == 1)) # miss in dias
+log_encode$miss_dias3 <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_dias3 == 1)) # miss in dias
+log_encode$miss_dias4 <- as.numeric((log_encode$detection == "MISS") & (log_encode$click_dias4 == 1)) # miss in dias
+
+#--------------------------------------------------------------------------
+```
+
+
+
+## 1.C. Add additional variables to log_encode
+
+### 1.C.1. Add ccovariates 
+
+```{r add Covariates to log_encode}
+#--------------------------------------------------------------------------
+# add col covariates (IA, mean RR, HRV, STAI) to dataframe log_encode
+log_encode <- left_join(log_encode, subset(score, select = c(IA,vp)), by = c('vp')) # add IA
+log_encode <- left_join(log_encode, subset(kubios, select = c(mrr_rest, mhr_rest, rmssd_rest,vp)), by = c('vp')) # add rmssd from rest
+log_encode <- left_join(log_encode, subset(stai, select = c(stai_sum,vp)), by = c('vp')) # add STAI
+
+log_encode <- left_join(log_encode, subset(data_age, select = c(age,vp)), by = c('vp')) # add age
+log_encode <- left_join(log_encode, subset(kubios_main, select = c(mhr_main,vp)), by = c('vp')) # add mean heart rate from experimental period
+
+#--------------------------------------------------------------------------
+```
+
+
+### 1.C.2. Add ratings 
+
+* Add individual and normative ratings for each picture to log_encode
+```{r add ratings to log_encode}
+#--------------------------------------------------------------------------
+# subset individual ratings from log_rate -> join with log_encode
+log_rate_subs <- log_rate[,c("vp", "stimnum", "rate_valence", "rate_arousal")] # subset with individual ratings
+log_encode$rate_arousal <- NULL
+log_encode <- left_join(log_encode, log_rate_subs, by = c('vp', 'stimnum'))
+
+# add normative arousal ratings to log_encode
+log_encode <- left_join(log_encode, emopics_norms[1:3], by = c('stimnum'))
+
+# save(log_encode, file = paste(path_dataframes,"log_encode.RData", sep="")) # save log_encode
+#--------------------------------------------------------------------------
+```
+
+
+
+
+# 2. PREPARE SHORT DATA FRAME: DATA_BINS
+
+## 2.A. Create data_bins (all valences)
+* Create short df with one row per pearticipant
+* melted -> casted log_encode: one row per vp
+```{r create df data_bins}
+#--------------------------------------------------------------------------
+# create data_bins -> cast means
+m <- melt(log_encode, id= c("vp", "valence"), measure = c("dur_enc_min", "HR_1perMin", "R_R_s", "Rtend_s", "qonR", "crop", "pep", "syspat", "diaspat", "allsys", "alldias"))
+data_bins <- cast(m, formula = vp ~ variable, mean) # c(mean)
+
+#--------------------------------------------------------------------------
+# sum of clicks in each cardiac interval
+m1 <- melt(log_encode, id = c("vp", "valence"), measure = c("click_pep", "click_sys1", "click_sys2", "click_x", "click_dias1", "click_dias2", "click_dias3", "click_dias4")) # long df of 0,1 
+c1 <- cast(m1, formula = vp ~ variable, sum) # cast -> calculate sum of clicks for each vp
+data_bins <- left_join(data_bins, c1, by = c("vp"))
+
+#--------------------------------------------------------------------------
+# sum of detection parameters (hits, misses, fa, cr) in each cardiac interval
+m2 <- melt(log_encode, id = c("vp", "valence"), measure = c("hit_pep", "hit_sys1", "hit_sys2", "miss_pep", "miss_sys1", "miss_sys2", "hit_dias1", "hit_dias2", "hit_dias3", "hit_dias4", "miss_dias1", "miss_dias2", "miss_dias3", "miss_dias4")) # long df of 0,1
+c2 <- cast(m2, formula = vp ~ variable, sum) # cast -> calculate sum
+data_bins <- left_join(data_bins, c2, by = c("vp"))
+
+#--------------------------------------------------------------------------
+# define proportion of heart intervals relative to total cardiac cycle
+data_bins$prop_allsys_RR <- data_bins$allsys / data_bins$R_R_s
+data_bins$prop_syspat_RR <- data_bins$syspat / data_bins$R_R_s # proportion syspat (=ejection period)
+data_bins$prop_pep_RR <- data_bins$pep / data_bins$R_R_s # proportion pep (=pre-ejection period)
+data_bins$prop_alldias_RR <- data_bins$alldias / data_bins$R_R_s
+
+#--------------------------------------------------------------------------
+# count sum of clicks in total electromechanical systole (pep+sys1+sys2), ejection period (lvet = sys1+sys2), diastole (dias1+dias2+dias3+dias4)
+# check click_allsys + click_alldias + data_bins$click_x == 120
+data_bins$click_allsys <-  data_bins$click_pep + data_bins$click_sys1 + data_bins$click_sys2 # clicks allsys 
+data_bins$click_lvet <- data_bins$click_sys1 + data_bins$click_sys2 # clicks lvet 
+data_bins$click_alldias <- data_bins$click_dias1 + data_bins$click_dias2 + data_bins$click_dias3 + data_bins$click_dias4 # clicks dias
+```
+
+
+## 2.B. Add Covariates (IA, STAI, HRV) to data_bins
+```{r add covariates to data_bins}
+#--------------------------------------------------------------------------
+data_bins <- merge(data_bins, data_var, by = "vp") # join with data_bins
+
+# save(data_bins, file = paste(path_dataframes,"data_bins.RData", sep="")) # save data_bins
+#--------------------------------------------------------------------------
+```
+

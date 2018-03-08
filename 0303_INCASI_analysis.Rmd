@@ -1,0 +1,887 @@
+---
+title: "0303_INCASI_analysis"
+author: "Stella"
+date: "03. March 2018"
+output: html_document
+---
+
+MAIN ANALYSIS:
+
+**1. ENCODING**
+
+1a. Circular analysis
+
+1b. Binary analysis
+
+
+**2. RECOGNITION**
+
+2a. Circular analysis
+
+2b. Binary analysis
+
+
+SUPPLEMENTARY ANALYSIS
+
+1. Supplementary recognition memory models
+
+2. Analyse individual picture ratings
+
+3. Analayse recognition rates
+
+
+### INCASI SETUP
+
+#### 1. General setup
+```{r INCASI setup, message = FALSE}
+#--------------------------------------------------------------------------
+# Clear workspace
+rm(list=ls())
+
+#--------------------------------------------------------------------------
+# Set working directory
+getwd()
+setwd("/Volumes/StellaDisk/INCASI_desktop/01_Analysis/0303_INCASI") # Stella's laptop
+
+#--------------------------------------------------------------------------
+# Define paths
+path_wd 	 <- getwd()
+path_data <- paste(path_wd,"/_data/",sep="") # path to file: _data
+path_scripts  <- paste(path_wd,"/_scripts/",sep="") # path to file: _scripts
+path_functions  <- paste(path_wd,"/_functions/",sep="") # path to file: _functions
+path_dataframes <- paste(path_wd,"/_dataframes/",sep="") # path to file: _dataframes
+path_variables <- paste(path_wd,"/_variables/",sep="") # path to file: _variables
+path_figures <- paste(path_wd,"/_figures/",sep="") # path to file: _figures
+
+#--------------------------------------------------------------------------
+# load packages
+source(paste(path_scripts,"loadPackages.R",sep="")) # installed Rpackages
+
+#--------------------------------------------------------------------------
+# load settings for ggplot
+source(paste(path_scripts,"loadTheme.R",sep="")) # ggplot theme
+source(paste(path_scripts,"loadColors.R",sep="")) # ggplot colours
+
+#--------------------------------------------------------------------------
+# define list of participants
+inc_list <- as.factor(dir(path_data)) #create list with participatns with all inc04 - inc50
+
+#--------------------------------------------------------------------------
+```
+
+
+####  2. Load dataframes for analysis: 
+
+Coding of cardiac phases:
+* Systole (lvet = syspat): sys1 + sys2
+* Diastole (alldias): dias1-dias4 (4 diastolic intervals of same length)
+* Non-defined: pep (pre-ejection phase), security window (50ms between end of systole and start diastole)
+
+* Load dataframes created in preprocessing scripts
+```{r scripts analysis, message = FALSE}
+#----------------------------------------------------------------------------
+# dataframes for analysis behaviour relative to cardiac cycle
+load(paste(path_dataframes,"log_encode.RData", sep="")) # long dataframe encoding (all datapoints from encoding)
+load(paste(path_dataframes,"data_bins.RData", sep="")) # short dataframe encoding (1 subject each row)
+
+# dataframes for analysis rating
+load(paste(path_dataframes, "log_rate.RData", sep="")) # long dataframe rating (all datapoints from rating period)
+
+load(paste(path_dataframes, "rate_va.RData", sep="")) # df with normative and individual ratings for each picture (180 pictures)
+#----------------------------------------------------------------------------
+```
+
+
+####  3. Load dataframes for covariates
+```{r load covariate scripts, results='hide'}
+#--------------------------------------------------------------------------
+# Interoceptive Awareness (IA)
+load(paste(path_dataframes, "score.RData", sep="")) # heart beat perception score df
+
+# Heart rate variability (HRV)
+load(paste(path_dataframes, "kubios.RData", sep="")) # kubios (mean HR, rmssd) df
+
+# State Trait Anxiety (STAI)
+load(paste(path_dataframes, "stai.RData", sep="")) # STAI-T (trait anxiety) df
+#--------------------------------------------------------------------------
+```
+
+
+####  4. Load functions
+```{r circular functions}
+#----------------------------------------------------------------------------
+# load functions for circular analysis
+source(paste(path_functions, "fx_circ_encoding.R", sep="")) # circular function for picture onsets relative to cardiac cycle (encoding period)
+source(paste(path_functions, "fx_circ_recognition.R", sep="")) # circular function for memory relative to picture onset in encoding (recognition period)
+
+# load helper functions
+source(paste(path_functions, "fx_standard_error.R", sep="")) # function to calculate standard error
+#----------------------------------------------------------------------------
+```
+
+
+####  5. Clean participant list 
+```{r inc_clean, results='hide'}
+#--------------------------------------------------------------------------
+# load clean inc_lists
+source(paste(path_scripts, "0303_Clean_inc_list.R", sep ="")) # load clean participant list
+
+# inc_clean <- inc_clean[c(1:40)] # take only fist 40 participants out of clean inc list (to test with dataset of preregistration size)
+#--------------------------------------------------------------------------
+```
+
+
+
+# MAIN ANALYSIS
+
+## 1. ENCODING - Cardiac influence on visual sampling
+
+* Adapt dataframe to clean participant list
+```{r enc adapt dataframe}
+#--------------------------------------------------------------------------
+# data_bins_enc: Create subset data_bins for encoding
+log_encode <- log_encode[log_encode$vp %in% inc_clean,]
+data_bins_enc <- data_bins[data_bins$vp %in% inc_clean,] 
+#--------------------------------------------------------------------------
+```
+
+
+### 1.A. Circular analysis
+
+* Relative onset of each self-chosen key press (i.e. stimulus onset) was computed across the cardiac cycle (from Rpeak to Rpeak), with radian measures (between 0 and 2π) assigned to each stimulus onset (c.f. `0303_INCASI_preprocess_b`)
+* Distribution of stimulus onsets is tested against the circular unifrom with Rayleigh tests
+* Apply function circ_click (loaded script *fx_circ_encoding.R*)
+
+#### 1.A.1. Exemplary participant-level analysis
+* Exemplary stimulus distribution (120 black dots) across the cardiac cycle (Rpeak = 0) of one participant
+
+**Figure 2.b.**
+* Orange segment: individual systole (start: solid, end: dashed)
+* Blue segment: individual diastole (start: solid, end: dashed)
+* Grey arrow: overall picture onset mean
+* Grey line: circular density of picture onsets
+```{r test participant-level against uniform}
+#--------------------------------------------------------------------------
+# plot exemplary individual plot  
+# pdf(file = paste(path_figures, "circ_click_sub25.pdf", sep=""), width=5, height=5)
+circ_click("inc25", plot1 = T, ray1 = T) # distribution of key-presses (picture onsets)
+# dev.off()
+#--------------------------------------------------------------------------
+```
+
+
+#### 1.A.2. Group-level analysis
+* Distribution of participants' stimulus onset means (43 black dots) across the cardiac cycle
+* Hypothesis: significant deviation of means from circular uniform distribution in early cardiac phase
+
+Figure (for visualization purposes, not included in manuscript):
+* Orange lines: individual means that fall into individual systole
+* Blue lines: individual diastolic means
+* Grey lines: individual means in non-defined cardiac intervals
+* Black arrow: overall picture onset mean across participants
+```{r test group-level against uniform}
+#--------------------------------------------------------------------------
+# 1. distribution of clicks in encoding
+par(mar=c(0,0,0,0))
+# pdf(file = paste(path_figures, "circ_click.pdf", sep=""),width=5,height=5)
+circ_click(inc_clean, plot2 = T, ray2 = T) # distribution of clicks without inc_HyperHR, inc_Err
+# dev.off()
+
+# print overall circular mean and sd (in radian)
+mean2 <- circ_click(inc_clean, mean2 = T)
+
+# calculate circular mean in pi: mean2 = mean2pi *pi
+mean2pi <- mean2[1] / pi
+sd2pi <- mean2[4] / pi
+#--------------------------------------------------------------------------
+```
+
+
+#### 1.A.3. Bootstrapping analysis
+* Non-parametical computation of confidence intervals and significance (based on Ohl et al., 2016)
+
+Bootstrap procedure:
+* From the original paricipant pool (N=43), a bootstrap sample (N=43) is drawn (with replacement)
+* For each participant in the bootstrap sample, a circular density (bw = 20) of picture onsets is computed
+* In the next step, the mean circular density across all participants in the bootstrap sample is computed
+
+* This bootstrap procedure is repeated 10000 times
+* 95% confidence intervals are determined as 2.5% and 97.5% percentiles from the distribution of mean circular densities
+```{r boostrap}
+#--------------------------------------------------------------------------
+# bootstrap main analysis
+nBoot  <- 10000 # number of repition of bootstrap procedure
+vplist <- unique(log_encode$vp) # list of participants
+
+# set up output variables
+out    <- c()
+buffer <- c()
+bwparam <- 20 # bandwith parameter
+
+# a) run whole bootstrap procedure
+# start loop
+for(i in 1:nBoot){ # repeat bootstrap procedure nBoot times
+  vplist_boot <- sample(vplist,replace=TRUE) # draw bootstrap sample
+  buffer <- c()
+  for(j in 1:length(vplist_boot)){ # compute circular density for each participant in sample
+    x=circular(log_encode$radclick[which(log_encode$vp==vplist_boot[j])],type="angles",units="radians",modulo="2pi",zero=pi/2,rotation="clock")
+    res50x  <- density(x, bw=bwparam) #Play around with bw. Make chi-square tests and check whether observed coupling is observed for all kinds of bw parameters
+    readout <- as.vector(res50x$y)
+    buffer  <- rbind(buffer,readout,deparse.level=0)
+  }
+  buffer  <- colMeans(buffer)
+  out <- rbind(out,buffer)
+}
+
+# save(res50x, file = paste(path_dataframes,"res50x.RData", sep="")) # save density
+# save(out, file = paste(path_dataframes,"out.RData", sep="")) # save bootstrap output
+
+#--------------------------------------------------------------------------
+# b) if boostrap procedure is already run, load bootstrap dataframes
+# load bootstrap dataframes
+# load(paste(path_dataframes,"res50x.RData", sep="")) 
+# load(paste(path_dataframes,"out.RData", sep="")) 
+
+# get 95% confidence intervals and median from bootstraps (quantiles: 0.025, 0.5, 0.975)
+ci_upper  <- c()
+ci_lower  <- c()
+ci_median <- c() 
+for(i in 1:ncol(out)){
+  ci_lower  <- c(ci_lower, as.numeric(quantile(out[,i],0.025))) # 2.5% percentile 
+  ci_upper  <- c(ci_upper, as.numeric(quantile(out[,i],0.975))) # 97.5% percentile
+  ci_median <- c(ci_median, as.numeric(quantile(out[,i],0.5))) # median
+}
+markup_upper <- which(ci_lower>dcircularuniform(1)) # upper CI bound
+markup_lower <- which(ci_upper<dcircularuniform(1)) # lower CI bound
+#--------------------------------------------------------------------------
+```
+
+
+Plot bootstrap density on circular plot with individual picture onset means:
+
+**Figure 1.a**:
+* Circular distribution of individual mean picture onsets (black dots, N = 43)
+* Black arrow: weighted overall mean of picture onsets as black arrow
+* Middle thicker line: mean circular density of picture onsets (based on bootstrap procedure)
+* Orange segment: mean systole
+* Blue segment: mean diastole
+* Grey: non-defined phases
+* Inner and outer thin grey lines: inner and out bound of 95% CI
+```{r boostrap plot}
+#--------------------------------------------------------------------------
+# plot bootstrap results
+
+# 1. load circular data of 2nd level analysis (circular mean picture onsets for each participant)
+load(paste(path_dataframes,"H_rad_secondlevel.RData", sep="")) 
+
+par(mar=c(0,0,0,0))
+# pdf(file = paste(path_figures, "bootstrap_bw",bwparam,".pdf",sep=""),width=6.5,height=6.5)
+
+# 2. plot circular plot with mean picture onsets (43 black dots)
+plot(H_rad_secondlevel, stack=TRUE, bins = 720, shrink = 1.0, axes = T, col= "black",cex = 1.0, lwd = 3, 
+     xlim=c(-1.22,1.22),ylim=c(-1.22,1.221)) # circular plot of 2nd level means
+
+# 3. add bootstrap density to plot
+res50x$y <- ci_median/dcircularuniform(1) 
+lines.circular(res50x$x,res50x$y,join=TRUE,col=defgrey,offset=0,rotation="clock",lwd=4)
+
+# 4. compute mean length of cardiac phases (systole, diastole) over all participants
+# transform mean lengths of cardiac phases into radian
+dat <- data_bins_enc
+mcirctrans <- mean(2 * pi * 1/(dat$R_R_s)) # circular transformation
+msysstart <- mean(mcirctrans * (dat$crop)) # mean systole start
+msysend <- mean(mcirctrans * (dat$Rtend_s)) # mean systole end
+mdiasstart <- mean(mcirctrans * (dat$Rtend_s + 0.05)) # mean diastole start
+mdiasend <- mean(mcirctrans * (dat$Rtend_s + 0.05 + dat$diaspat)) # mean diastole end
+
+# 5. colour the systolic and diastolic segments of the circular density
+x <- res50x$x # x coordinates of points on density
+msyspos <- which(x >= msysstart & x <= msysend) # position of points for systole
+mdiaspos <- which(x >= mdiasstart & x <= mdiasend) # position of points for diastole
+
+lines.circular(res50x$x[msyspos],res50x$y[msyspos],join=F,col=deforange,offset=0,rotation="clock",lwd=3) # draw systolic density segment (orange)
+lines.circular(res50x$x[mdiaspos],res50x$y[mdiaspos],join=F,col=defmedblue,offset=0,rotation="clock",lwd=3) # draw diastolic density segment (blue)
+
+# #check fit of segments (compute beginning and end of systolic, diastolic segment)
+# # function to draw line segments onto circular plot
+# circseg <- function (a, lty, col) { # define a= radians value to draw segment at, lty = linetype (1 = normal, 2 = dashed)
+#   xcoord <- sin(a)
+#   ycoord <- cos(a)
+#   segments(0,0,xcoord, ycoord, col = col, lty= lty, lwd = 2)
+# }
+# 
+# # check fit of density segments
+# circseg(msysstart, 1, deforange) # sys start
+# circseg(msysend, 2, deforange) # sys end
+# circseg(mdiasstart, 1, defmedblue) # dias start
+# circseg(mdiasend, 2, defmedblue) # dias stop
+
+# 6. plot significant density segment
+lines.circular(res50x$x[markup_upper],res50x$y[markup_upper],col=deforange,lwd=8,offset=0,rotation="clock")
+
+# 7. plot lower and upper bound of confidence interval
+res50x$y <- ci_lower/dcircularuniform(1) # lower bound
+lines.circular(res50x$x,res50x$y,join=TRUE,col="light grey",offset=0,rotation="clock",lwd=2)
+res50x$y <- ci_upper/dcircularuniform(1) # upper bound
+lines.circular(res50x$x,res50x$y,join=TRUE,col="light grey",offset=0,rotation="clock",lwd=2)
+
+# 8. plot central cross to mark center of circle
+segments(0,0,0.05,0, lwd = 2)
+segments(0,0,-0.05,0, lwd = 2)
+segments(0,0.05,0,0, lwd = 2)
+segments(0,-0.05,0,0, lwd = 2)
+
+# 9. plot overall circular mean of picture onsets
+arrows.circular(mean(H_rad_secondlevel), y=rho.circular(H_rad_secondlevel), lwd = 5, col = "black") # overall mean
+
+# dev.off()
+#--------------------------------------------------------------------------
+```
+
+
+### 1.B. Binary analysis
+
+Analysis of individual cardiac phases: compare phases (individual systole, diastole) against each other 
+
+Analyse ratios between both carduac phases (systole, diastole) to take into account inter-individual differences in phase lengths:
+* Sum of clicks (picture onsets) per phase (as ratio of all 120 trials) is normalized to the proportion of the subject-specific phase length in the total cardiac cycle
+* Define ratios: (clicks per phase / 120) / (individual phase length/ individual mean R-R length)
+
+* With no cardiac effect: clicks (triggering picture onsets) would expected to be randomly distributed across both cardiac phases -> click ratio (clicks/120) should correspond to cardiac phase ratio (phase length/whole cycle) -> ratio value = 1
+* With cardiac effect: over-proportional accumulation of key presses in systole -> systolic ratio value > 1
+
+* Hypothesis: significant accumulation of clicks in individual systole: ratio value for systole > diastolic ratio
+
+
+#### 1.B.1 Define ratios for both phases (systole, diastole):
+```{r enc define ratios}
+#--------------------------------------------------------------------------
+# compute ratios for each phase
+
+## SYSTOLE
+# each systolic phase
+data_bins_enc$click_pep_rel <- (data_bins_enc$click_pep/120) /  (data_bins_enc$pep/data_bins_enc$R_R_s) # pre-ejection period
+data_bins_enc$click_sys1_rel <- (data_bins_enc$click_sys1/120) /  ((0.5 * data_bins_enc$syspat)/data_bins_enc$R_R_s) # first 1/2 of ejection-phase 
+data_bins_enc$click_sys2_rel <- (data_bins_enc$click_sys2/120) / ((0.5 * data_bins_enc$syspat)/data_bins_enc$R_R_s) # second 1/2 of ejection-phase
+
+# whole ejection-phase
+data_bins_enc$click_lvet_rel <- ((data_bins_enc$click_lvet)/120)/((data_bins_enc$syspat)/data_bins_enc$R_R_s) # all clicks in lvet (sys1+sys2) / lvetlength (syspat) 
+
+# total electromechanical systole (pre-ejection + ejection phase)
+data_bins_enc$click_allsys_rel <- ((data_bins_enc$click_allsys)/120)/((data_bins_enc$pep + data_bins_enc$syspat)/data_bins_enc$R_R_s)  # all clicks in sys (pep+sys1+sys2) / syslength (pep + syspat)
+
+#--------------------------------------------------------------------------
+## DIASTOLE
+# each diastolic phase (whole diastole divided in 4 parts)
+data_bins_enc$click_dias1_rel <- (data_bins_enc$click_dias1/120) / ((0.25* data_bins_enc$diaspat)/data_bins_enc$R_R_s) 
+data_bins_enc$click_dias2_rel <- (data_bins_enc$click_dias2/120) / ((0.25* data_bins_enc$diaspat)/data_bins_enc$R_R_s) 
+data_bins_enc$click_dias3_rel <- (data_bins_enc$click_dias3/120) / ((0.25* data_bins_enc$diaspat)/data_bins_enc$R_R_s) 
+data_bins_enc$click_dias4_rel <- (data_bins_enc$click_dias4/120) / ((0.25* data_bins_enc$diaspat)/data_bins_enc$R_R_s)  
+
+# total diastole
+data_bins_enc$click_alldias_rel <- ((data_bins_enc$click_alldias)/120) / (data_bins_enc$diaspat/data_bins_enc$R_R_s) # all clicks in dias (dias1+dias2+dias3+dias4) / diaslength (diaspat)
+```
+
+
+#### 1.B.2 Run analysis: Paired t-test
+* Group-level analysis: normalized systolic and diastolic ratios are tested against each (two-sided paired t-test)
+* Is there a significant higher systolic (lvet) vs. diastolic ratio?
+```{r enc paired ttest}
+#--------------------------------------------------------------------------
+# paired t-test
+t.test(data_bins_enc$click_lvet_rel, data_bins_enc$click_alldias_rel, paired = T) # *
+cohen.d(data_bins_enc$click_lvet_rel, data_bins_enc$click_alldias_rel, paired = T)
+```
+
+
+#### 1.B.3. Plot results with ggplot
+
+a) Prepare dataframes: melt and cast dataframes
+* phase (lvet, dias = variable) ~ respective ratios (=value)
+```{r enc  prep dataframes}
+#--------------------------------------------------------------------------
+# prepare long df m_lvetclick (relative clickrates for ejection-phase vs whole diastole)
+# melt data_bins_enc showing phase (lvet, dias = variable) ~ respective ratios (=value)
+m_lvetclick <- melt(data_bins_enc, id = "vp", measure = c("click_lvet_rel", "click_alldias_rel"))
+colnames(m_lvetclick) <- c("vp", "phase", "rel_clickrate")
+
+# cast m_lvetclick: for each phase(lvet, dias=variable) show ratio(=value) mean, sd, length, se
+c_lvetclick <- cast(m_lvetclick, phase ~ ., c(mean, sd, length, se, se_up, se_down), value = "rel_clickrate")
+
+#--------------------------------------------------------------------------
+```
+
+
+b) Create column for colouring different cardiac phases in ggplot (systole, diastole, non-defined phase)
+```{r colour column}
+#--------------------------------------------------------------------------
+## COMPARE SYSTOLE(LVET) AND DIASTOLE
+
+# compare click rates with phase rates (click rate - phase rate)
+# systole
+data_bins_enc$diff_plvet <- (data_bins_enc$click_lvet/120) - data_bins_enc$prop_syspat_RR # click rate systole - prop systole
+data_bins_enc$check_plvet <- (sign(data_bins_enc$diff_plvet)) # check whether click rate (1) or phase rate (-1) is higher
+
+# diastole
+data_bins_enc$diff_pdias <- (data_bins_enc$click_alldias/120) - data_bins_enc$prop_alldias_RR # click rate dias - prop dias
+data_bins_enc$check_pdias <- (sign(data_bins_enc$diff_pdias))
+
+# create column col to prepare coloring each quadrant (q1, q2, q3,q4) of ggplot
+for (i in (1:length(data_bins_enc$vp))) {
+  if(as.numeric(data_bins_enc$check_pdias[i] > 0 & data_bins_enc$check_plvet[i] < 0)) { #q1 (left upper, overproportional diastolic ratio)
+    data_bins_enc$col[i] <- 1
+  } else if(data_bins_enc$check_pdias[i] > 0 & data_bins_enc$check_plvet[i] > 0) { #q2 (right upper, overproportional diastolic ratio)
+    data_bins_enc$col[i] <- 2
+  } else if (data_bins_enc$check_pdias[i] < 0 & data_bins_enc$check_plvet[i] > 0) { #q3 (right lower, overproportional systolic ratio)
+    data_bins_enc$col[i] <- 3
+  } else {
+    data_bins_enc$col[i] <- 2 #q4 (left lower, non-defined)
+  }
+  
+}
+data_bins_enc$col <- factor(data_bins_enc$col)
+#--------------------------------------------------------------------------
+```
+
+
+c) Scatter plot for systolic vs. diastolic ratio
+**Figure 1.b**:
+* Systolic vs. diastolic ratio for each participant
+* Dashed lines: number of picture onsets that would be expected if they were uniformly distributed (resulting in a ratio = 1)
+* Orange: participants who preferred to prompt pictures in systole (systolic ratio >1, diastolic <1)
+* Blue: participants who preferred to prompt pictures in diastole (diastolic ratio >1, systolic <1)
+* Grey: participants who did not show a preference in any of the two defined phases
+```{r ggplot relative ratios}
+#--------------------------------------------------------------------------
+par(mar=c(0,0,0,0))
+# pdf(file = paste(path_figures, "fig_sysdias1",".pdf",sep=""),width=4.5,height=4.5)
+
+# scatterplot relative click rates for total systole (x) vs. total diastole (y)
+fig_sysdias <- ggplot(data_bins_enc) +
+  geom_hline(aes(yintercept = 1), size=0.5, linetype="dashed")+ 
+  geom_vline(aes(xintercept = 1), size=0.5, linetype="dashed")+
+  geom_point(size=3, aes(x=click_lvet_rel, y=click_alldias_rel, col = col, shape = col))+ #click_alldias_rel
+  scale_colour_manual(values=c(defmedblue, defgrey, deforange, defgrey)) +
+  geom_point(data = c_lvetclick, colour = "black", aes(x=mean[1], y=mean[2]), size = 3) +
+  geom_errorbarh(data = c_lvetclick, colour = "black", aes(x = mean[1], xmin = se_down[1], xmax = se_up[1], y = mean[2]),  size=0.5, height = 0.005) +
+  geom_errorbar(data = c_lvetclick, colour = "black", aes(ymin = se_down[2], ymax = se_up[2], x = mean[1]),  size=0.5, width = 0.005) +
+  coord_cartesian(xlim = c(0.75, 1.4), ylim = c(0.75, 1.4)) +
+  labs(x = "Systolic ratio", y = "Diastolic ratio") +
+  mytheme 
+
+fig_sysdias
+
+# dev.off()
+
+#--------------------------------------------------------------------------
+```
+
+
+
+
+## 2. RECOGNITION - Cardiac influence on recognition memory
+
+* Adapt dataframe to clean participant list
+```{r rec analysis absolute}
+#--------------------------------------------------------------------------
+log_encode <- log_encode[log_encode$vp %in% inc_clean,]
+#--------------------------------------------------------------------------
+```
+
+
+### 2.A. Circular analysis
+
+* Test distribution of memory probes (hits, misses) relative to their cardiac time point in encoding against circular uniform distribution (for each valence: neg, neu, pos)
+
+
+#### 2.A.1. Exemplary participant-level analysis of hits, misses
+
+* Exemplary stimulus distribution of picture onsets across the cardiac cycle (Rpeak = 0) for hits, misses
+* Circular plots (for visualization purposes, not included in manuscript):
+```{r test HIT, MISS against uniform for one vp}
+#--------------------------------------------------------------------------
+# first-level analysis: exemplary participant
+circ_click_mem("inc25", det = "hit_miss", plot1 =T, ray1  = T) # distribution of memory probes (= hits and misses)
+circ_click_mem("inc25", det = "HIT", plot1 =T, ray1  = T) # distribution of hits
+circ_click_mem("inc25", det = "MISS", plot1 =T, ray1  = T) # distribution of misses
+#--------------------------------------------------------------------------
+```
+
+
+#### 2.A.2. Group-level analysis of hits, misses 
+
+* Distribution of participants' stimulus onset means (encoding) across the cardiac cycle for hits and misses
+* Circular plots (for visualization purposes, not included in manuscript):
+```{r test HIT, MISS against uniform group-level}
+#--------------------------------------------------------------------------
+# second-level analysis: HITs
+# pdf(file = paste(path_figures, ,"circ_det_hit.pdf", sep=""), width=6, height=6)
+circ_click_mem(inc_clean_cutSignmem_ray, det = "HIT", plot2 =T, ray2 = T) 
+# dev.off()
+
+# second-level analysis: MISSes
+# pdf(file = paste(path_figures, "Manuscript/","circ_det_miss.pdf", sep=""), width=6, height=6)
+circ_click_mem(inc_clean_cutSignmem_ray, det = "MISS", plot2 =T, ray2 = T)
+# dev.off()
+#--------------------------------------------------------------------------
+```
+
+
+
+### 2.B. Binary analysis: Linear mixed model (LMM) 
+
+* Analyse influence of cardiac phase (systole, diastole) and valence (negative, neutral, positive) on recognition memory.
+
+* LMM for binomial data with subject as random factor
+* Dependent variable: recognition memory (coding: 0 = miss, 1 = hit) = bivariate dependent variable
+
+* Independent within-subject variables:
+  * Cardiac phase: 0 = diastole, 1 = systole
+  * Three valence levels (positive, negative, neutral), contrast-coded with neutral valence as baseline condition:   
+    positive-neutral, negative-neutral
+
+
+#### 2.B.1. Compute overall mean recognition performance
+
+* Mean recognition performance (detection rate) for negative, neutral, positive old pictures 
+```{r mean recognition performance}
+#--------------------------------------------------------------------------
+## adapt dataframe
+data <- log_encode[log_encode$vp %in% inc_clean,] 
+
+# remove all trials with items that were not presented during encoding (include only old pictures)
+idx <- which(is.na(data$answer)==FALSE) # select only rows where answer is not NA (NA for new pictures)
+d <- data[idx,] # df for memory probes 
+
+#--------------------------------------------------------------------------
+# mean performance for each participant overall
+m1 <- melt(d,id=c("vp"),measure=c("answer"))
+c1 <- cast(m1, vp ~ variable,mean)
+
+# get mean recognition performance for each participant (for each valence)
+m2 <- melt(d,id=c("valence","vp"),measure=c("answer"))
+c2 <- cast(m2,valence + vp ~ variable,mean)
+
+#mean recognition performance over all participants for each valence
+m3 <- melt(c2,id=c("valence"),measure=c("answer"))
+c3 <- cast(m3, valence ~ variable, c(mean, sd))
+#--------------------------------------------------------------------------
+```
+
+
+
+#### 2.B.2. Prepare variables
+* Valence: contrast-coded with neutral as baseline (positive-neutral, negative-neutral)
+* Cardiac phase: 0 = diastole, 1 = systole
+```{r regression model rec prep}
+#--------------------------------------------------------------------------
+## prepare variables for linear model
+d$vp <- as.factor(d$vp)
+
+# adapt dataframe: select only trials from individual systole, diastole
+# phase: set diastole == 0 as reference condition, systole = 1
+d <- d[(d$click_bin=="click_lvet" | d$click_bin=="click_dias"),] # select only clicks in systole (lvet) and diastole (dias)
+d$ds <- as.factor(ifelse(d$click_bin=="click_dias",0,1)) # set dias 0, lvet 1 (factor with 2 levels)
+
+# valence: define contrast - set neutral valence as reference condition
+d$valence2 <- d$valence
+contrasts(d$valence2) <- contr.treatment(3,base=1) # contrast with neutral as baseline -> 3 factor levels, base = neutral (level1)
+#--------------------------------------------------------------------------
+```
+
+
+#### 2.B.3. Run model
+* m0: recognition memory ~ valence
+* m1: recognition memory ~ valence * cardiac phase
+
+* see also **Table 1**:
+```{r regression model rec run}
+#--------------------------------------------------------------------------
+# 1. model for valence
+m0 <- glmer(answer~ valence2 + (1|vp),data=d,family="binomial") # valence
+
+# 2. model for valence * cardiac phase (include arousal ratings? -> iar, iarz)
+m1 <- glmer(answer ~ valence2*ds + (1|vp),data=d,family="binomial") # valence * cardiac phase
+
+# check output of models
+summary(m0) 
+#--------------------------------------------------------------------------
+```
+
+
+#### 2.B.4. Plot model
+* Plot model prediction (for visualization purposes, not included in manuscript):
+```{r regression model rec plot}
+#--------------------------------------------------------------------------
+## 1. overall model for valence:
+# m0: memory performance as function of valence (m0)
+d$pred_logit <- predict(m0) # add model fits to df
+d$pred_prob  <- exp(d$pred_logit)/(1+exp(d$pred_logit))
+
+#val: plot(d$answer,d$pred_prob)
+pred_val <- ggplot(d,aes(x=valence2,y=pred_prob))+ 
+  scale_colour_manual(values=c(defmedblue, deforange)) +
+  geom_boxplot()+
+  labs(x = "Valence", y = "Predicted probability") +
+  mytheme
+pred_val
+
+#--------------------------------------------------------------------------
+## 2. create model for valence * cardiac phase
+# m1: compute predictions for model valence * cardiac phase (m1, m2)
+d$pred_logit <- predict(m1) # add model fits to df
+d$pred_prob  <- exp(d$pred_logit)/(1+exp(d$pred_logit))
+
+#valds: plot(d$answer,d$pred_prob)
+pred_valds <- ggplot(d,aes(x=valence2,y=pred_prob,colour=click_bin))+
+  scale_colour_manual(values=c(defmedblue, deforange)) + # blue: diastole, orange: systole
+  geom_boxplot()+
+  labs(x = "Valence * Cardiac phase", y = "Predicted probability") +
+  mytheme
+pred_valds
+#--------------------------------------------------------------------------
+```
+
+
+
+
+# SUPPLEMENTARY ANALYSIS
+
+## 1. Supplementary models for recognition memory: add inter-individual variables
+
+### 1.A. Include additional variables (inter-individual differences)
+* Model: Recognition memory ~ valence * phase + additional variable
+
+* 1. Heart rate variability (rmssdl: log-transformed to mitigate skewedness and centred to the mean) 
+* 2. Trait Anxiety (staiz: z-transformed)
+* 3. Interoceptive Awareness (IAz: z-transformed)
+```{r regression model rec var prep}
+#--------------------------------------------------------------------------
+# 1. HRV (rmssd): log-transform of heart rate variability
+d$rmssd <- d$rmssd_rest
+d$rmssdl <- log(d$rmssd) - mean(log(d$rmssd)) # centered by mean
+# hist(d$rmssdl)
+
+# 2. STAI: z-Transform of trait anxiety
+d$staiz <- (d$stai_sum - mean(d$stai_sum))/sd(d$stai_sum) 
+#hist(d$staiz)
+
+# 3. IA: z-Transform of interoceptive awareness
+# remove 2 sujbects without IA measure (d1)
+idx <- which(is.na(d$IA)==FALSE)
+d1 <- d[idx,]
+d1$IAz <- (d1$IA - mean(d1$IA))/sd(d1$IA)
+
+# save(d, file = paste(path_dataframes,"d.RData", sep=""))
+#--------------------------------------------------------------------------
+```
+
+
+### 1.B. Run supplementary models with additional covariates
+
+* m2: add rmssdl to m1 (recognition memory ~ valence * cardiac phase + rmssdl)
+* m2a: add age to m2 (recognition memory ~ valence * cardiac phase + rmssdl + age)
+
+* m3: add staiz to m1 (recognition memory ~ valence * cardiac phase + staiz)
+* m4: add IAz to m1 (recognition memory ~ valence * cardiac phase + IAz)
+
+* see also **Table 1**:
+```{r regression model rec var run}
+#--------------------------------------------------------------------------
+## 1. HRV: rmssd (with age as confounding variable)
+
+# add rmssdl to m1
+m2 <- glmer(answer ~ valence2*ds + rmssdl + (1|vp),data=d, family="binomial")
+m2a <- glmer(answer ~ valence2*ds + rmssdl + age + (1|vp),data=d,family="binomial")
+
+anova(m1,m2) # *
+anova(m1,m2a) # 
+
+# for visualisation
+gam2 <- bam(answer ~ valence2*ds + s(rmssdl),data=d,family="binomial")
+plot(gam2)
+
+
+#--------------------------------------------------------------------------
+## 2. STAI
+m3 <- glmer(answer ~ valence2*ds + staiz + (1|vp),data=d,family="binomial")
+
+anova(m1,m3) # n.s.
+
+#--------------------------------------------------------------------------
+## 3. IA (run models with d1, minus 2 participants without IA)
+# rerun m1 with d1 -> adapted participant number 
+m1edit <- glmer(answer~valence2*ds + (1|vp),data=d1,family="binomial") # encoding durtaion
+m4 <- glmer(answer~valence2*ds + IAz + (1|vp),data=d1,family="binomial") # encoding durtaion
+
+anova(m1edit,m4) # n.s.
+
+# output of model 
+summary(m2) 
+#--------------------------------------------------------------------------
+```
+
+
+
+## 2. Analyse ratings: Subjective perception of picture emotionality (normative vs. individual ratings)
+
+### 2.A. Normative and individual means of picture ratings for arousal and valence
+
+* Compare individual vs. normative ratings (mean, sd, se)
+
+* see also **Supplementary Table 1**:
+```{r stimnum ratings}
+#----------------------------------------------------------------------------
+# 1. AROUSAL: melt arousal ratings - melt rate_va
+m_rate_a <- melt(rate_va, id = c("stimnum", "valence"), measure = c("rate_arousal", "norms_arousal"))
+
+# cast m_rate_a: valence (rows) ~ mean individual rating (cols)
+c_rate_a <- cast(m_rate_a, valence ~ variable, c(mean, sd, length, se)) #   mean, sd, length, se for each valence
+c_rat_a_all <- cast(m_rate_a, . ~ variable, c(mean, sd, length, se)) # over all valences
+
+# 2. VALENCE: melt valence ratings - melt rate_v
+m_rate_v <- melt(rate_va, id = c("stimnum", "valence"), measure = c("rate_valence", "norms_valence"))
+
+# cast m_rate_v: valence (rows) ~ mean individual rating (cols)
+c_rate_v <- cast(m_rate_v, valence ~ variable, c(mean, sd, length, se)) # mean, sd, length, se for each valence
+c_rat_v_all <- cast(m_rate_v, . ~ variable, c(mean, sd, length, se)) # over all valences
+#----------------------------------------------------------------------------
+```
+
+
+### 2.B. Run tests to compare normative vs. individual ratings
+* 1. Run ANOVA to test ratings across rating category (normative, individual) and valence
+* 2. Run one-sided ttests for normative vs. individual ratings across each valence level
+
+* see also **Supplementary Table 1**:
+```{r stimnum ratings run tests}
+#----------------------------------------------------------------------------
+## 1. Run ANOVA:
+# for each valence level: run anova to test for diff. in mean ratings between individual and normative 
+
+# 1.1. AROUSAL ratings: rating value ~ valence * rating category (individual vs. norms)
+aov_a <- aov((value) ~ valence * variable, data=m_rate_a) 
+summary(aov_a)
+
+
+# 1.2. VALENCE ratings
+aov_v <- aov(log(value) ~ valence * variable, data=m_rate_v)
+summary(aov_v)
+
+#----------------------------------------------------------------------------
+## 2. Run one-sided t-tests across valence levels
+
+# run t-tests for each valence subset
+# subsets for each valence
+sub_neg <- rate_va[rate_va$valence == "negativ",]
+sub_pos <- rate_va[rate_va$valence == "positiv",]
+sub_neu <- rate_va[rate_va$valence == "neutral",]
+
+## 2.1. AROUSAL
+# a) Neutral pictures
+a_neu <- t.test(sub_neu$norms_arousal,sub_neu$rate_arousal) # **
+cohen.d(sub_neu$norms_arousal,sub_neu$rate_arousal)
+cor.test(sub_neu$norms_arousal,sub_neu$rate_arousal) # ***
+
+# b) Positive pictures
+a_pos <- t.test(sub_pos$norms_arousal,sub_pos$rate_arousal) # ***
+cohen.d(sub_pos$norms_arousal,sub_pos$rate_arousal)
+cor.test(sub_pos$norms_arousal,sub_pos$rate_arousal) # ***
+
+# c) Negative pictures
+a_neg <- t.test(sub_neg$norms_arousal,sub_neg$rate_arousal) # *
+cohen.d(sub_neg$norms_arousal,sub_neg$rate_arousal)
+cor.test(sub_neg$norms_arousal,sub_neg$rate_arousal) # ***
+
+# adjust p-values
+p_aro <- c(a_neu$p.value, a_pos$p.value, a_neg$p.value)
+p.adjust(p_aro, method = "bonferroni")
+
+#----------------------------------------------------------------------------
+## 2.2. VALENCE
+# a) Neutral pictures
+v_neu <- t.test(sub_neu$norms_valence,sub_neu$rate_valence) # n.s.
+cohen.d(sub_neu$norms_valence,sub_neu$rate_valence)
+cor.test(sub_neu$norms_valence,sub_neu$rate_valence) # ***
+
+# b) Positive pictures
+v_pos <- t.test(sub_pos$norms_valence,sub_pos$rate_valence) # ***
+cohen.d(sub_pos$norms_valence,sub_pos$rate_valence)
+cor.test(sub_pos$norms_valence,sub_pos$rate_valence) # ***
+
+# c) Negative pictures
+v_neg <- t.test(sub_neg$norms_valence,sub_neg$rate_valence) # n.s.
+cohen.d(sub_neg$norms_valence,sub_neg$rate_valence)
+cor.test(sub_neg$norms_valence,sub_neg$rate_valence) # ***
+
+# adjust p-values
+p_val <- c(v_neu$p.value, v_pos$p.value, v_neg$p.value)
+p.adjust(p_val, method = "bonferroni")
+
+#----------------------------------------------------------------------------
+## 3. compute difference in norms arousal ratings: btw. negative and positive pictures (described in methods)
+# norms ratings
+t.test(sub_neg$norms_arousal,sub_pos$norms_arousal) # n.s. difference btw norms arousal (neg vs pos)
+cohen.d(sub_neg$norms_arousal,sub_pos$norms_arousal)
+
+# individual ratings
+t.test(sub_neg$rate_arousal,sub_pos$rate_arousal) # *** diff. btw. rated arousal (neg vs pos)
+cohen.d(sub_neg$rate_arousal,sub_pos$rate_arousal)
+#----------------------------------------------------------------------------
+```
+
+
+### 2.C. Plot normative vs. individual ratings
+
+* 1. Plot Valence ratings
+* 2. Plot Arousal ratings
+* see **Supplementary Figure 1**:
+```{r stimnum ratings plot}
+#----------------------------------------------------------------------------
+# 1. Valence ratings
+cor_val <- ggplot(rate_va) +
+  geom_abline(slope=1, size=0.2358491) +
+  geom_point(size=1, aes(norms_valence, rate_valence), colour = defgrey) + 
+  geom_point(data = c_rate_v, colour = "black", aes(x=norms_valence_mean, y=rate_valence_mean), size = 1.5) +
+  geom_errorbarh(data = c_rate_v, colour = "black", aes(x = norms_valence_mean, xmin = norms_valence_mean - norms_valence_se, xmax = norms_valence_mean + norms_valence_se, y = rate_valence_mean),  size=0.2358491, height = 0.1) +
+  geom_errorbar(data = c_rate_v, colour = "black", aes(ymin = rate_valence_mean - rate_valence_se, ymax = rate_valence_mean + rate_valence_se, x = norms_valence_mean),  size=0.2358491, width=0.1) +
+  facet_wrap(~valence)+
+  #geom_smooth(method = "lm", se = T, colour = "black", size=0.2358491) + 
+  mytheme + #mytheme #theme_classic() +
+  scale_x_continuous(name = "normative rating - valence",
+                           breaks = seq(1, 8, 2),
+                           limits=c(1, 8)) +
+  scale_y_continuous(name = "mean individual rating - valence",
+                     breaks = seq(1, 8, 1),
+                           limits=c(1, 8)) 
+cor_val
+
+# ggsave("fig_corval.pdf", plot = cor_val, device = "pdf", path = path_figures,
+#   dpi = 300, width = 15, height = 6, units = "cm", limitsize = T)
+
+#----------------------------------------------------------------------------
+# 2. Arousal ratings
+cor_aro <- ggplot(rate_va) +
+  geom_abline(slope=1, size=0.2358491) +
+  geom_point(size=1, aes(norms_arousal, rate_arousal), colour = defgrey) + #shape=15
+  geom_point(data = c_rate_a, colour = "black", aes(x=norms_arousal_mean, y=rate_arousal_mean), size = 1.5) +
+  geom_errorbarh(data = c_rate_a, colour = "black", aes(x = norms_arousal_mean, xmin = norms_arousal_mean - norms_arousal_se, xmax = norms_arousal_mean + norms_arousal_se, y = rate_arousal_mean),  size=0.2358491, height = 0.1) +
+  geom_errorbar(data = c_rate_a, colour = "black", aes(ymin = rate_arousal_mean - rate_arousal_se, ymax = rate_arousal_mean + rate_arousal_se, x = norms_arousal_mean),  size=0.2358491, width=0.1) +
+  facet_wrap(~valence)+
+  #geom_smooth(method = "lm", se = T, colour = "black", size=0.2358491) + 
+  mytheme + #mytheme #theme_classic() +
+  scale_x_continuous(name = "normative rating - arousal",
+                           breaks = seq(2, 7, 1),
+                           limits=c(2, 7)) +
+  scale_y_continuous(name = "mean individual rating - arousal",
+                     breaks = seq(2, 7, 1),
+                           limits=c(2, 7)) 
+cor_aro
+
+# ggsave("fig_coraro.pdf", plot = cor_aro, device = "pdf", path = path_figures,
+#   dpi = 300, width = 15, height = 6, units = "cm", limitsize = T)
+#----------------------------------------------------------------------------
+```
+
+
+

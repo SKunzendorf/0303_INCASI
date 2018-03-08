@@ -1,0 +1,676 @@
+---
+title: "Algorithm to extract twave in ECG"
+author: "Stella"
+date: "11 Mai 2017"
+output: html_document
+---
+
+### INCASI setup
+
+#### 1. General setup
+```{r INCASI_setup, message = FALSE}
+#--------------------------------------------------------------------------
+# Clear workspace
+rm(list=ls())
+
+#--------------------------------------------------------------------------
+# Set working directory
+getwd()
+setwd("/Volumes/StellaDisk/INCASI_desktop/01_Analysis/0302_INCASI") # Stella's laptop
+
+#--------------------------------------------------------------------------
+# Define paths
+path_wd 	 <- getwd()
+path_data <- paste(path_wd,"/_data/",sep="") 
+path_scripts  <- paste(path_wd,"/_scripts/",sep="")
+path_functions  <- paste(path_wd,"/_functions/",sep="") 
+path_dataframes <- paste(path_wd,"/_dataframes/",sep="") 
+path_variables <- paste(path_wd,"/_variables/",sep="")
+path_figures <- paste(path_wd,"/_figures/",sep="") 
+
+#--------------------------------------------------------------------------
+# load packages
+source(paste(path_scripts,"loadPackages.R",sep="")) # installed Rpackages
+
+#--------------------------------------------------------------------------
+# load settings for ggplot
+source(paste(path_scripts,"loadTheme.R",sep="")) # ggplot theme
+source(paste(path_scripts,"loadColors.R",sep="")) # ggplot colours
+
+#--------------------------------------------------------------------------
+# define list of participants
+inc_list <- as.factor(dir(path_data)) #create inc_list with all inc04 - inc50
+
+#--------------------------------------------------------------------------
+# specify ECG sampling frequency (in Hz)
+ecg_sf <-  2048 # --> 1 datapoint every 0.4882812 ms (1000/2048)
+
+#--------------------------------------------------------------------------
+```
+
+
+####  2. Load dataframes for analysis: 
+```{r load dataframes}
+#--------------------------------------------------------------------------
+load(paste(path_dataframes,"log_encode.RData", sep="")) 
+load(paste(path_dataframes,"data_bins.RData", sep=""))
+
+load(paste(path_dataframes,"main_exg2_peaks_s_list.RData",sep="")) # list with Rpeaks from Kubios for each inc
+load(paste(path_dataframes,"main_exg2_dtp.RData",sep=""))  # list with ecg leads for each inc
+
+#--------------------------------------------------------------------------
+```
+
+
+
+# 1. T-TEMPLATE
+
+## 1.A. Load rst_list
+
+`rst_list`: list with dataframes for each participant to compute averaged Rst snippet: 
+* each df contains 1000 rows of ecg snippets (here called `rst`, since it contains R,s and t-twave) of ECGtrace (starting at Rpeak, extracted from Kubios, ending after a number of dpts that is equal to the overall mean R-R interval length)
+* rows = num_rst (number of rst snippets to average over)
+* cols = one column per dpt (length of snippet: dpt <- mean R_R_s length)
+
+```{r rst_list}
+#--------------------------------------------------------------------------
+### create list with matrixes to compute averaged Rst snippet
+
+ num_rst <- 1000 # define number of rows: how many snippets to average over? 
+ dpt <- as.integer(mean(log_encode$R_R_s) * ecg_sf)  # define number of columns: overall mean duration of R-R intervals defined as length of each Rst snippet (arbitrarily set, but should contain end of t-wave)
+#
+rstdata <- matrix(nrow = num_rst, ncol = dpt) # prepare empty matrix
+
+rstonset_dpt <- numeric()
+rst_list <- list()
+
+for (isub in seq_along(inc_list)) { # loop over participant list
+
+  ecg_dpt <- main_exg2_dtp[[isub]][[1]] # extract ecg lead for isub (from experimental phase)
+  peaks_s <-  main_exg2_peaks_s_list[[isub]] # extract Rpeaks for isub (from experimental phase)
+
+  for (irst in 1:num_rst) { # loop over rows of matrix (number rst)
+
+    rstonset_dpt <- peaks_s[irst]*ecg_sf # for each Rpeak: transform onset of Rpeak from sec in dpt
+    rstdata[irst,] <- ecg_dpt[rstonset_dpt:(rstonset_dpt+(dpt-1))] # for each Rpeak: extract dpts from rstonset until 1535 consecutive dpts -> fill columns with 1536 dpts
+
+  }
+  rst_list[[isub]] <- rstdata
+}
+# save(rst_list, file = paste(path_dataframes,"rst_list.RData", sep=""))
+#--------------------------------------------------------------------------
+
+# b) if code is run already, load: 
+# load(paste(path_dataframes, "rst_list.RData", sep="")) # list with dataframes to average rst example
+```
+
+
+## 1.B. Create averaged Rst snippet and crop out t_template
+
+1. `mean_rst`: averaged Rst snippet: for each column of each matrix (=equals 1 dpt) in rst_list: compute colmean and create mean Rst snippet
+
+2. `t_template`: list with t_templates for each vp: within Rst snippet crop out piece that - physiologically plausible - contains the twave (150 - 800 dpts after Rpeak)
+```{r rst snippet}
+par(mfrow=c(2,2))
+
+mean_rst <- list()
+idx_dpt_mean_rst <- numeric()
+df_mean_rst <- list()
+t_template <- list()
+idx_dpt_t_template <- numeric()
+df_t_template <- list()
+
+for (isub in seq_along(rst_list)) {
+  
+  ### 1. mean_rst
+  # compute mean_rst: average over num_rst (number of rows)
+  mean_rst[[isub]] <- colMeans(rst_list[[isub]]) # compute mean of snippets for each column (compute mean voltage signal for each column = 1 dpt)
+  plot.ts(mean_rst[[isub]], main = paste(inc_list[isub], ": averaged ecg trace")) # plot mean Rst-snippet
+  
+  # # optional: prepare for ggplot mean_rst
+  # idx_dpt_mean_rst <- seq(1,dpt, by = 1) # write vector, containing sequence of integers for indexing dpts of mean_rst -> xlab
+  # df_mean_rst[[isub]] <- data.frame(idx_dpt_mean_rst, mean_rst[[isub]]) # create df, containing dpt index and respective voltage signal for each dpt
+  # ggplot(df_mean_rst[[isub]], aes(idx_dpt_mean_rst, mean_rst[[isub]])) +
+  #  geom_line(na.rm=TRUE, color = "blue")
+  
+  #--------------------------------------------------------------------------
+  ### 2. t_template
+  # compute t_template: cut piece of twave from mean_rst
+  
+  # extract dpts [150:769] from mean_rst -> !!think about physiologically plausible length!
+  # length t_template = 650 dpts /2048 = 0.30 sec (= plausible length systole)
+  # (150+650 = 800dpts)/2048 = 0.390 sec -> within this time average twave should be finished (check visually by plotting template)
+  
+  n <- 150 # start of cut-out of template (start after Rpeak)
+  t_template[[isub]] <- mean_rst[[isub]][(n:(n+649))] # list containing t-templates for each subject
+  plot.ts(t_template[[isub]], main = paste(inc_list[isub], ": averaged t_template")) # plot t_template
+  
+  # # optional: ggplot t_template
+  # idx_dpt_t_template <- seq(1,length(t_template[[isub]]), by = 1) # write vector, containing sequence of integers for indexing dpts of t_template -> xlab
+  # df_t_template[[isub]] <- data.frame(idx_dpt_t_template, t_template[[isub]])
+  # 
+  # #ggplot(df_t_template[[isub]], aes(idx_dpt_t_template, t_template[[isub]])) +
+  # geom_line(na.rm=TRUE, color = "red")
+}
+
+#save(mean_rst,file = paste(path_dataframes,"mean_rst.RData", sep=""))
+```
+
+
+
+## 1.C. Trapez area approach (TRA): find end of twave
+
+* `trapez_area`: function to define end of twave
+
+**Trapez area approach** (paper: Vázquez-Seisdedos, 2011)
+
+* TRA is based on the calculation of successive areas of a rectangular trapezium 
+
+* three fixed vertexes (xm, ym, xr) and one mobile vertex (xi, yi), which is shifted through the signal, from (xm, ym) to (xr, yi), while the total area is computed.
+
+* Method: find coordinates of moving point (xi, yi) where area of trapez gets maximal -> indicates end of twave
+
+* T-wave end: x coordinate: x_tend = point where max(a)
+
+$$ A=0.5 * (ym −yi) * (2xr −xi −xm) $$
+
+```{r trapez_area}
+# function to define end of twave:
+
+trapez_area <- function(xm, ym, x_seq, y_seq, xr) {
+  
+  a <- numeric()
+  for (i in seq_along(x_seq)){ # data (x-coordinates of template) to loop along
+    a[i] <- 0.5 * (ym - y_seq[i]) * ((2*xr_dpt) - x_seq[i] - xm_dpt) # calculate respective trapez area a
+  }
+  x_tend <- which.max(a) # t-end within x_seq (where a gets maximal)
+  return ((x_seq[x_tend]))     # return t-end within t_template 
+}
+```
+
+
+## 1.D. Analyse t_template: Apply trapez_area to find tend in t_template
+
+1. Find maximum within first 3/4 of t_template (here t-peak should physiologically plausible occur, account for signal ascents in some leads after t-wave end, thus crop out first 3/4)
+* `tmax_templ`: xcoordinate of tmax (maximum of twave) within template (dpt)
+* `Rtmax_templ`: distance from Rpeak to tmax (dpt)
+
+2. `ts_postmax`: crop out part of t_template after tmax (to find location of t-wave end)
+
+3. `diff_postmax`: compute 1. derivative of ts_postmax
+
+4. Define points to apply function `trapez_area`
+* xm, ym, xr, yr, x_seq (= possible coordinates of xi), y_seq (=possible coordinates of yi)
+
+5. Apply function trapez_area
+* `x_tend`: x coordinate of end of twave (difference from tmax to tend in dpts)
+* `tend_templ`: t end relative within t_template (in dpt)
+* `Rtend_templ`: distance from preceding Rpeak to tend (in dpt)
+
+6. Calculate duration of systole
+* `sys_dur_s`: length from Rpeak to tend in sec -> Rtend_templ(dpt) / sampling frequency (2048)
+
+7. Plot t_template, mean_rst with end of twave
+
+```{r tend_templ}
+#--------------------------------------------------------------------------
+par(mfrow=c(2,2))
+
+### compute coordinates in t_template to find end of twave in template
+tem <- numeric()
+tmax_templ <- numeric()
+Rtmax_templ <- numeric()
+x_tend <- numeric()
+tend_templ <- numeric()
+Rtend_templ <- numeric()
+# Rtstart_templ <- numeric()
+# Rtstart_templ_s <- numeric()
+# Rtmax_templ_s <- numeric()
+sys_dur_s <- numeric()
+
+
+for (isub in seq_along(t_template)) { # loop over list with t-templates for each subject
+  
+  ### 1. find maximum in t_template
+    tem <-   t_template[[isub]] # extract t_template for each isub
+    
+    # calculate tmax (account for: in some t_templates: strong ascent of ecg lead after tend that reaches beyond tmax)
+    # assume that main peak is within first 3/4 of t_template
+    # define x-coordinate of tmax within t_template
+    snip_tem <- tem[1:(3/4*length(tem))] # extract first 3/4 of t-template that surely contain tmax
+    tmax_templ[isub] <- which.max(snip_tem) # find dpt of tmax within t_template
+    Rtmax_templ[isub] <- n + tmax_templ[isub] # distance from Rpeak to max_templ (in dpt)
+
+  ### 2. crop out piece of t-template after tmax:
+    # idx of dpts after tmax in template
+    idx_dpt_t_template <- seq(1,length(tem), by = 1) # create index vector of t-template
+    dpts_postmax <- which(idx_dpt_t_template > tmax_templ[isub]) # dpts postmax
+    ts_postmax <- tem[dpts_postmax] # time series t_template post tmax
+    plot.ts(ts_postmax, main = paste(inc_list[isub], ": averaged t_postmax")) # plot ts_postmax
+    
+  ### 3. compute first derivation of ts_postmax 
+    diff_postmax <- diff(ts_postmax) # 1. derivation ts
+    plot.ts(diff_postmax, main = paste(inc_list[isub], ": 1. derivative t-template after t-peak"))
+    
+  # 4. prepare fixed vertextes (xm, ym, xr, yr) to apply function trapez_area
+    # find negative minimum in 1. diff: = where twave has highest negative gradient
+    xm_dpt <- which(diff_postmax == min(diff_postmax)) # xm: minimum in 1. derivate (start of looping)
+    ym <- ts_postmax[xm_dpt] # ym: y abscisse of xm in ts_postmax
+    
+    xr_dpt <- length(dpts_postmax) # xr: reference point (end of t-template) (end of looping)
+    yr <- ts_postmax[length(dpts_postmax)]  # yr
+    
+    x_seq <- seq(xm_dpt, xr_dpt,1) # sequence of possible x-coordinates to loop over with function trapez_area
+    y_seq <- ts_postmax[x_seq] # sequence of corresponding y-coord to loop over with fct trapez_area
+    
+  # 5. apply function and store output (end of twave) in x_tend
+    x_tend[isub] <- trapez_area(xm, ym, x_seq, y_seq, xr) # difference from tmax to tend
+    
+    tend_templ[isub] <- tmax_templ[isub] + x_tend[isub] # end of twave within t_template
+    Rtend_templ[isub] <- Rtmax_templ[isub] + x_tend[isub] # end of twave from previous Rpeak 
+    # Rtstart_templ[isub] <- (Rtmax_templ[isub] - x_tend[isub]) # start of twave from previous Rpeak
+    # Rtstart_templ_s[isub] <- (Rtmax_templ[isub] - x_tend[isub]) / ecg_sf # start of twave
+    # Rtmax_templ_s[isub] <- Rtmax_templ[isub]/ecg_sf
+    
+  # 6. calculate duration of systole (from Rpeak to end of twave)
+  sys_dur_s[isub] <- ((Rtend_templ[isub])/ecg_sf) # transformation from dpts -> sec 
+
+  # 7. Rst snippet
+  mean <- mean_rst[[isub]]
+  plot.ts(mean, main = paste(inc_list[isub], ": averaged snippet")) # plot Rst snippet
+
+  # 8. plot t-template
+  plot.ts(tem, main = paste(inc_list[isub], ": averaged t_template")) # plot t_template
+  lines(tem[1:(tend_templ[isub])], col = "red") # plot t_template + end of twave
+}
+
+#--------------------------------------------------------------------------
+summary(sys_dur_s) # systole length from Rpeak to t-wave end
+names(sys_dur_s) <- inc_list
+
+#save(sys_dur_s,file = paste(path_dataframes,"fin_sys_dur_s.RData", sep=""))
+#--------------------------------------------------------------------------
+```
+
+
+
+## 1.E. Control t-template with actual ecg trace (check correlation)
+
+### 1.E.1. Function scale_t_example
+
+* `scale t_example`: adapt scale of random twave snippet in ecg lead to scale of t_template to be able to plot both it in the same graph (because of baseline drifts in real ecg leads, the voltage y-scale sometimes varies)
+
+```{r scale_t_example}
+scale_t_example <- function(x) {
+  diff <- abs(min(t_template[[isub]]) - min(x))
+  
+  if(min(x) < min(t_template[[isub]])) {x + diff}
+  else {x - diff}
+}
+```
+
+
+
+### 1.E.2. Apply t_template to real twave snippets in encoding phase
+
+1. Define end of encoding phase and extract Rpeaks within encoding
+* `data_enc`: data frame containing enc_off_dpt (last picture offset in dpt), enc_off_s (last picture offset in sec), enc_dur_min (encoding duration), position_last (last Rpeak in encoding)
+
+2. For each Rpeak in encoding phase: crop out ecg lead snippets that correspond to templates
+* `rs_snip`: actual ecg snippet corresponding to `mean_rst` (=averaged Rst-snippet)
+* `t_example`: actual twave snippet corresponding tp `t_template` (=averaged twave templace)
+
+3. Test correlation with real ecg lead snippet
+* `cor`: correlate t_example with t_template
+* If cor < 0.5 -> send warning
+* `èrr_dat`: dataframe containing information about snippet where cor < 0.5
+
+4. Apply `Rtend_templ`(distance from R to tend) to real examples
+* `tend_real_s_vec`: list containing timepoints of twaves ends (in sec) for each vp in encoding
+* `rst_enc`: list containing timepoints of rstonset_dpt, tend_real_s_vec, cor for each vp in encoding
+```{r t_example}
+#--------------------------------------------------------------------------
+par(mfrow=c(2,2))
+
+enc_off_dpt <- numeric()
+enc_off_s <- numeric()
+enc_dur_min <- numeric()
+position_last <- numeric()
+
+tend_real_s <- list()
+rst_enc <- list()
+err_dat <- data.frame()
+
+# for phase of encoding: loop over all participants 
+# 1. extract end of enc, Rpeaks in enc
+for (isub in seq_along(inc_list)) {
+  
+  ecg_dpt <- main_exg2_dtp[[isub]][[1]] # extract ecg lead for isub
+  peaks_s <-  main_exg2_peaks_s_list[[isub]] # extract Rpeaks for isub
+  tem <- t_template[[isub]] # t-template for isub
+  
+  # define end of encoding
+  enc_off_dpt[isub] <- max(log_encode$picoffset_ecgtime_s[(log_encode$vp == inc_list[isub])])*ecg_sf # last pic-offset in dpt
+  enc_off_s[isub] <- max(log_encode$picoffset_ecgtime_s[(log_encode$vp == inc_list[isub])]) # last pic-offset in sec
+  enc_dur_min[isub] <- enc_off_s[isub]/60
+  position_last[isub] <- max(which(peaks_s < enc_off_s[isub])) # last Rpeak in encoding (before last pic-offset)
+  
+  # create dataframe with information from encoding
+  data_enc <- data.frame(enc_off_dpt,enc_off_s, enc_dur_min, position_last) 
+
+  
+  # 2. loop over Rpeaks in encoding phase 
+  # check correlation with t_template
+  
+  rstonset_dpt <- numeric()
+  cor <- numeric()
+  tend_real_s_vec <- numeric()
+
+  for (i in 1:(position_last[isub])) { # loop over R peaks in encoding
+    
+    rstonset_dpt[i] <- peaks_s[i]*ecg_sf # extract Rpeaks in dpts from peaks_s
+    rs_snip <- ecg_dpt[rstonset_dpt[i]:(rstonset_dpt[i]+(dpt-1))] # crop rs snippet, s.o. as for rsdata
+    #plot.ts(rs_snip, main = paste(inc_list[isub], ": rs_snip"))
+    
+    t_example <- rs_snip[(n:(n+649))] # crop out corresponding t-wave from real ecg
+    #plot.ts(t_example, main = paste(inc_list[isub], ": t_example"))
+    
+    # 3. test correlation of t_example and t_template
+    cor[i] <- cor(tem, t_example)
+    
+
+    if (cor[i] < 0.50) { # report all
+      message(inc_list[isub], " peak: ", i, " cor < 0.50")
+      t_example_scale <- scale_t_example(t_example)
+      plot.ts(t_example_scale, main = paste(inc_list[isub], i, ": scaled t_example + t_template")) # plot t_example
+      lines(tem, col = "blue") # plot whole t_template into example (blue)
+      lines(tem[1:tend_templ[isub]], col = "red") #  + plot end of twave (red)
+      err_vec_cur <- data.frame(isub, i, cor[i]) # df containing subject, number of Rpeak, and correlation that is < 0.5
+      err_dat <- rbind(err_dat, err_vec_cur)  # df containing subject, number of Rpeak, and correlation that is < 0.5
+    }
+    
+    # 4. apply Rtend_templ to each extracted Rpeak onset 
+    tend_real_s_vec[i] <- (rstonset_dpt[i] + Rtend_templ[isub])/2048 # tend in sec (counting from beginning of enc)
+  }
+  
+  rst_enc[[isub]] <- data.frame(rstonset_dpt, tend_real_s_vec, cor)
+
+}
+
+names(rst_enc) <- inc_list # label list
+
+colnames(err_dat) <- c("vp", "Rpeak", "correlation")
+# save(rst_enc, file = paste(path_dataframe,"rst_enc.RData", sep=""))
+```
+
+
+
+### 1.E.3. Visually check fitting of templates in real ecg snippets (where correlation with template < 0.5)
+
+* Take samples from err_dat (where cor < 0.5) and check for validity
+```{r t_proof}
+par(mfrow=c(2,2))
+### check random rst snippet to test validity
+#err_dat = df containing subject, number of Rpeak, and correlation that is < 0.5
+isub <- err_dat[1,1] # pick one subject
+i <- err_dat[1,2] # index of Rpeak in encoding phase 
+ecg_dpt <- main_exg2_dtp[[isub]][[1]] # extract ecg lead for isub
+tem <- t_template[[isub]] # t-template for isub
+r_on <- rst_enc[[isub]]$rstonset_dpt[i] # Rpeak onset for isub
+t_off <- (rst_enc[[isub]]$tend_real_s_vec[i])*2048  # t-wave offset for isub
+
+# check whether distance r_on -> t_off = distance from Rpeak -> tend lies within in template
+t_off - r_on == Rtend_templ[isub]
+
+# extract snippet from actual ecg lead
+rs_proof <- ecg_dpt[r_on:(r_on+(dpt-1))] # extract snippet from ecg lead
+plot.ts(rs_proof, main = paste(inc_list[isub], i, ": proof ecg snippet")) # plot snippet from R -> (dpt-1) following dpts
+
+# check whether t-wave end is correctly estimated
+rst_proof <- ecg_dpt[r_on:t_off] # extract Rpeak to t-wave end from ecg lead
+plot.ts(rst_proof, main = paste(inc_list[isub], i, ": proof Rtend_templ") ) # plot from Rpeak until tend
+
+# check twave snippet
+t_proof <- rs_proof[(n:(n+649))] # extract t snippet from ecg lead
+plot.ts(t_proof, main = paste(inc_list[isub], i, ": proof t_template")) # plot twave snippet
+
+# scale t_proof and apply t_template
+t_proof_scale <- scale_t_example(t_proof) # scale t_proof
+plot.ts(t_proof_scale, main = paste(inc_list[isub], i, ": proof cor with t_template")) # plot t_example
+lines(tem, col = "blue") # plot t_template 
+      lines(tem[1:tend_templ[isub]], col = "red") #  + end of twave
+
+cor <- cor(t_proof, tem) # calculate correlation for t_proof and t_template
+
+# check whether cor == correlation calculated in loop
+cor == rst_enc[[isub]]$cor[i]
+print(cor)
+```
+
+
+
+
+# 2. Q-TEMPLATE
+
+## 2.A. Load qrst_list
+
+`qrst_list`: list with dataframes for each vp to compute averaged qrst snippet: 
+
+* each df contains 1000 snippets (here called `qrst`, since it contains q,R,s and t-twave) of ECGtrace:
+* starting at Rpeak-onset and crop 100 dpts before (physiologically plausible interval to include qwave)
+* includes Rpeak, extracted from Kubios, s, twave
+* ends after a number of dpts that is equal to the overall mean R-R length
+* rows = num_qrst (number of qrst complexes to average over)
+* cols = one column per dpt (length of snippet: dpt <- mean R_R_s length)
+
+```{r qrst_list}
+#--------------------------------------------------------------------------
+### create list with matrixes to compute averaged qrst snippet
+
+num_qrst <- 1000 # how many Rpeaks to average over?
+dpt <- as.integer(mean(log_encode$R_R_s) * ecg_sf) # find mean length of R_R_S
+q <- 100 # substract number of dpts from Rpeak to include qwave
+
+qrstdata <- matrix(nrow = num_qrst, ncol = dpt) # prepare empty matrix
+
+Ronset_dpt <- numeric() # onset Rpeak
+qrst_list <- list()
+
+for (isub in seq_along(inc_list)) {
+
+  ecg_dpt <- main_exg2_dtp[[isub]][[1]] # extract ecg lead for isub (in dpt)
+  peaks_s <-  main_exg2_peaks_s_list[[isub]] # extract Rpeaks for isub (in sec)
+
+  for (iqrst in 1:num_qrst) { # loop over rows (number qrst complexes, earlier defined as 1000)
+
+    Ronset_dpt <- peaks_s[iqrst+1]*ecg_sf # for each Rpeak: define onset of respective Rpeak in dpt (start with 2nd peak in Kubios file, to ensure that preceding qwave is included when extracting from ecg file)
+    qrstdata[iqrst,] <- ecg_dpt[(Ronset_dpt-q):(Ronset_dpt-q+(dpt-1))] # extract interval starting q dpts before Ronset to include qwave
+    #qrstdata[iqrst,] <- ecg_dpt[Ronset_dpt:(Ronset_dpt+(dpt-1))] # for each Rpeak: extract dpts from qrstonset until 1535 consecutive dpts -> fill columns with 1536 dpts
+
+  }
+  qrst_list[[isub]] <- qrstdata
+}
+#save(qrst_list, file = paste(path_dataframe,"qrst_list.RData", sep=""))
+#--------------------------------------------------------------------------
+
+# b) if already created
+# load(paste(path_dataframes, "qrst_list.RData", sep="")) # list with dataframes to average qrst example
+```
+
+
+
+## 2.B. Create averaged qrst snippet and crop out qrs_template
+
+1. `mean_qrst`: for each column of each matrix (=equals 1 dpt) in qrst_list: compute colmean and create mean qrst snippet (averaged cardiac cycle containing qRst)
+
+2. `qrs_template`: crop out first part from mean_qrst (1:200 dpts at beginning) to create qRs complex template (1:100 dpts until Rpeak, 100:200 from Rpeak onwards to include descending part of Rpeak, s-wave)
+
+3. `q_templ`: cropped out part in qrs template that contains qwave until Rpeak (first 100 dpt in template, defined as q s.o.)
+```{r qrst snippet}
+par(mfrow=c(1,1))
+
+mean_qrst <- list()
+qrs_template <- list()
+q_templ <- list()
+qonR_dpt <- numeric()
+qonR_s <- numeric()
+
+for (isub in seq_along(qrst_list)) {
+
+  ### 1. mean_qrst
+  # compute mean_qrst: average over num_qrst complexes
+  mean_qrst[[isub]] <- colMeans(qrst_list[[isub]]) # compute mean qrst (compute mean voltage signal for each column = 1 dpt)
+  #plot.ts(mean_qrst[[isub]], main = paste(inc_list[isub], ": averaged R_R cycle (start from q)")) # plot mean qrst
+
+  #--------------------------------------------------------------------------
+  ### 2. qrs_template
+  qrs_template[[isub]] <- mean_qrst[[isub]][(1:200)] # extract first 200 dpts from mean_qrst for template qRs complex
+  #plot.ts(qrs_template[[isub]], main = paste(inc_list[isub], ": averaged qrs_template")) # plot t_template
+
+  #--------------------------------------------------------------------------
+  ### 3. create q_templ
+  q_templ[[isub]] <- qrs_template[[isub]][1:q] # template of qtip (q = substracted dpts from Rpeak = distance from beginning   of template until Rpeak)
+  #plot(q_templ[[isub]], main = paste(inc_list[isub], ": q_templ"))
+
+  # 3.a. derivative of qtempl
+  #plot(diff(q_templ[[isub]]), main = paste(inc_list[isub], ": 1. derivative q_templ"))
+  #diff <- diff(q_templ[[isub]])
+  
+  # 3.b. define deflection of qwave from baseline: first point where 1. derivative of q_templ is < -2 (real descent to qpeak) OR > 2 (if no q wave, but direct ascent to Rpeak)
+  # take value 2 as ascent to ensure it is not only small noise but really ascent / descent
+  x_q <- min(which(diff(q_templ[[isub]])<=-2.0 | diff(q_templ[[isub]]) > 2.0)) # difference from start template to beginning of qwave
+  
+  # 3.c substract q(100 dpts) - x coordinate of q to get distance from q to Rpeak
+  qonR_dpt[isub] <- q - x_q # in dpts
+  qonR_s[isub] <- qonR_dpt[isub]/ecg_sf # in s
+
+  # control with plot
+  plot.ts(mean_qrst[[isub]], main = paste(inc_list[isub], ": averaged R_R cycle (start from q)"))
+  lines(xy.coords(x = (x_q:q), y = mean_qrst[[isub]][(x_q:q)]), col = "red")
+}
+
+names(qonR_s) <- inc_list # duration of qwave until Rpeak
+
+#save(qonR_s, file = paste(path_dataframes,"qonR_s.RData", sep=""))
+load(paste(path_dataframes, "qonR_s.RData", sep="")) 
+```
+
+
+
+# 3. OVERALL CHECK OF DEFINED CARDIAC INTERVALS
+
+## 3.A. Visual Check of cardiac phases (systolic ejection-phase, diastole) in averaged ecg templates
+```{r check templ}
+#--------------------------------------------------------------------------
+par(mfrow=c(2,2))
+
+for (isub in seq_along(mean_rst)) { # loop over all templates
+  
+  ## define cardiac phases
+  Rtend_dpt <- data_bins$Rtend_s[isub] * ecg_sf
+  Rtendx_dpt <- (data_bins$Rtend_s[isub] + 0.05) * ecg_sf
+  crop <- data_bins$crop[isub] * ecg_sf # part of PEP (after Rpeak)
+  syspat <- Rtend_dpt- crop # = ejection-period
+  diaspat <- data_bins$diaspat[isub] * ecg_sf # = diastole
+  qonR <- qonR_s[isub] * ecg_sf # part of PEP (before Rpeak) = PEP - crop
+  pep <- data_bins$pep[isub] # PEP
+  
+  # plot template with cardiac intervals
+  mean <- mean_rst[[isub]]
+  plot.ts(mean, main = paste(inc_list[isub], ": averaged snippet")) # plot Rst snippet
+  
+  # plot systole (crop + syspat)
+  lines(xy.coords(x = (1:(crop)), y = mean[(1:(crop))]), col = "black") # plot crop
+  lines(xy.coords(x = (crop:(crop+0.5*syspat)), y = mean[(crop:(crop+0.5*syspat))]), col = deforange) # plot sys1
+  lines(xy.coords(x = ((crop+0.5*syspat):(crop+syspat)), y = mean[(crop+0.5*syspat):(crop+syspat)]), col = deforange) # plot sys2
+  lines(xy.coords(x = (Rtend_dpt:(Rtendx_dpt)), y = mean[(Rtend_dpt:(Rtendx_dpt))]), col = "black")  # plot bermuda x
+
+  # plot diastole (diaspat starting from Rtendx)
+  lines(xy.coords(x = (Rtendx_dpt:(Rtendx_dpt + 0.25*diaspat)), y = mean[Rtendx_dpt:(Rtendx_dpt + 0.25*diaspat)]), col = defmedblue) # plot dias1
+  lines(xy.coords(x = ((Rtendx_dpt + 0.25*diaspat):(Rtendx_dpt + 0.5*diaspat)), y = mean[(Rtendx_dpt + 0.25*diaspat):(Rtendx_dpt + 0.5*diaspat)]), col = defmedblue)  # plot dias2
+  lines(xy.coords(x = ((Rtendx_dpt + 0.5*diaspat):(Rtendx_dpt + 0.75*diaspat)), y = mean[(Rtendx_dpt + 0.5*diaspat):(Rtendx_dpt + 0.75*diaspat)]), col = defmedblue)  # plot dias3
+  lines(xy.coords(x = ((Rtendx_dpt + 0.75*diaspat):(Rtendx_dpt + diaspat)), y = mean[(Rtendx_dpt + 0.75*diaspat):(Rtendx_dpt + diaspat)]), col = defmedblue)  # plot dias4
+
+}
+
+#--------------------------------------------------------------------------
+```
+
+
+
+## 3.B. Visual Check of cardiac intervals in real ECGlead
+
+* Take samples from real ecg lead to visually check for validity of defined cardiac intervals
+* Check fit of cardiac phases in all 120 trial cardiac cycles in ecg trace of encoding period (for one random subject)
+* orange: individual systole (ejection-phase, ending with twave end)
+* blue: individual diastole
+* dashed line: stimulus onset
+```{r check real ecg}
+par(mfrow=c(1,1))
+#--------------------------------------------------------------------------
+## select subject
+isub <- 22 #nice ecg trace: isub = 4, 22
+
+## run loop for all subjects
+#for (isub in seq_along(main_exg2_dtp)) { 
+
+ecg_dpt <- main_exg2_dtp[[isub]][[1]] # extract ecg lead for isub
+log_encode_subs <- log_encode[log_encode$vp == inc_list[isub],] # create subset of log_encode for isub
+position <- log_encode_subs$position # extract vector of Rpeak positions before clicks (indicate cardiac cycle involved in trial)
+
+for (iclick in seq_along(position)) { # loop over Rpeak positions before clicks
+
+ipos <- position[iclick] # position of Rpeak before clicks
+r_on <- main_exg2_peaks_s_list[[isub]][ipos] * ecg_sf # select respective Rpeak from Rpeak list
+clickon <- log_encode_subs$diff_click_peak_s[iclick] * ecg_sf # clickonset
+clickrow <- select(log_encode_subs, starts_with("click_"))[iclick,] # select row with info about click in which interval
+clicknames <- colnames(clickrow) # select column names of clickrow
+clickbin <- clicknames[which(clickrow == 1)] # select column name in which click is made
+
+# define cardiac intervals
+pep <- log_encode_subs$pep[iclick ] * ecg_sf
+qonR <- (log_encode_subs$pep[iclick ] - log_encode_subs$crop[iclick ]) * ecg_sf
+crop <- log_encode_subs$crop[iclick] * ecg_sf
+
+Rtend <- log_encode_subs$Rtend_s[iclick] * ecg_sf # Rtend
+Rtendx <- (log_encode_subs$Rtend_s[iclick] + 0.05) * ecg_sf # Rtendx (bermuda x)
+syspat <- Rtend - crop #Rtend - crop 
+
+diaspat <- log_encode_subs$diaspat[iclick] * ecg_sf
+
+RR <-   log_encode_subs$R_R_s[iclick]  * ecg_sf # (RR = Rtendx+diaspat+qonR)
+#--------------------------------------------------------------------------
+# extract snippet from ecg lead
+ecg_proof <- ecg_dpt[r_on:(r_on+(RR+crop))] # extract snippet from ecg lead (from Rpeak until next Rpeak + crop)
+
+# plot ecg_proof
+plot.ts(ecg_proof, main = paste(inc_list[isub], "click", iclick, clickbin), lwd = 2) # plot snippet from R -> (RR-1) following RRs
+  
+  # add lines to proof intervals
+  # plot crop + syspat
+  lines(xy.coords(x = (1:(crop)), y = ecg_proof[(1:(crop))]), col = "black", lwd = 2) # plot crop
+  lines(xy.coords(x = (crop:(crop+0.5*syspat)), y = ecg_proof[(crop:(crop+0.5*syspat))]), col = deforange, lwd = 2) # plot sys1 
+  lines(xy.coords(x = ((crop+0.5*syspat):(crop+syspat)), y = ecg_proof[(crop+0.5*syspat):(crop+syspat)]), col = deforange, lwd = 2) # plot sys2 
+  lines(xy.coords(x = (Rtend:(Rtendx)), y = ecg_proof[(Rtend:(Rtendx))]), col = "black", lwd = 2) # plot bermuda x
+
+  # plot diaspat 
+  lines(xy.coords(x = (Rtendx:(Rtendx + 0.25*diaspat)), y = ecg_proof[Rtendx:(Rtendx + 0.25*diaspat)]), col = defmedblue, lwd = 2) # plot dias1 #00BFC4
+  lines(xy.coords(x = ((Rtendx + 0.25*diaspat):(Rtendx + 0.5*diaspat)), y = ecg_proof[(Rtendx + 0.25*diaspat):(Rtendx + 0.5*diaspat)]), col = defmedblue, lwd = 2)  # plot dias2
+  lines(xy.coords(x = ((Rtendx + 0.5*diaspat):(Rtendx + 0.75*diaspat)), y = ecg_proof[(Rtendx + 0.5*diaspat):(Rtendx + 0.75*diaspat)]), col = defmedblue, lwd = 2)  # plot dias3
+  lines(xy.coords(x = ((Rtendx + 0.75*diaspat):(Rtendx + diaspat)), y = ecg_proof[(Rtendx + 0.75*diaspat):(Rtendx + diaspat)]), col = defmedblue, lwd = 2)  # plot dias4
+  lines(xy.coords(x = ((Rtendx + diaspat):(Rtendx + diaspat + qonR)), y = ecg_proof[(Rtendx + diaspat):(Rtendx + diaspat + qonR)]), col = "black", lwd = 2)  # plot qonR
+  lines(xy.coords(x = ((Rtendx + diaspat + qonR):(Rtendx + diaspat + pep)), y = ecg_proof[(Rtendx + diaspat + qonR):(Rtendx + diaspat + pep)]), col = "black", lwd = 2)  # plot crop 
+
+  # plot clickonset
+  abline(v = clickon, lty= 3, lwd = 2)
+  
+#--------------------------------------------------------------------------  
+}
+
+#}
+```
+
+
+
+
+
