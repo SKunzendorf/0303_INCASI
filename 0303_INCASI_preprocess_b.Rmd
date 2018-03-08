@@ -111,7 +111,7 @@ rate_va <- left_join(c_rate_stim, emopics_norms[1:3], by = c('stimnum'))
 #--------------------------------------------------------------------------
 # load dataframes
 ## age
-data_age <- read.csv(file = paste(path_variables, "INCASI_age.csv", sep=""), header=TRUE, sep = ';', dec = ",")  # hbp score df
+data_age <- read.csv(file = paste(path_variables, "INCASI_age.csv", sep=""), header=TRUE, sep = ';', dec = ",")  # age df
 
 ## IA
 load(paste(path_dataframes, "score.RData", sep="")) # hbp score df
@@ -159,13 +159,23 @@ flex_medsplit <- function(df, colname, list, plot = F) {
     }
   
   # 4. plot medsplit
+    
+    #assign each participant a number (for better readability x axis on plot)
+    vplist <- unique(medsplit$vp)
+    vpnum <- 0
+    for(i in 1:length(vplist)){
+    idx <- which(medsplit$vp==vplist[i])
+     vpnum[idx] <- i
+      }
+   
   if (plot == T) {
-    plot_medsplit <- ggplot(data = medsplit, aes(x= vp, y = vec, colour = medsplit)) +
+    plot_medsplit <- ggplot(data = medsplit, aes(x= vpnum, y = vec, colour = medsplit)) +
       scale_colour_manual(values=c(defmedblue, deforange)) +
       geom_point(na.rm = T) +
       geom_abline(intercept = median_vec, slope = 0) +
       ggtitle(paste("Mediansplit", colname, "for: ", deparse(substitute(list))))+
-      labs(x = "Participants", y = colname) 
+      labs(x = "Participants", y = colname) +
+      mytheme
     print(plot_medsplit)
   }
   
@@ -250,11 +260,11 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
   
   ## a) create main_exg_2 lists (if not created)
   # # Read single lead with dtp for each vp
-  main_exg2_dtp[[part]] <- read.table(paste(path_data, part, '/crop/Kubios/', part, '_main_exg2.txt', sep = ''))
+  main_exg2_dtp[[part]] <- read.table(paste(path_data, part, '/', part, '_main_exg2.txt', sep = ''))
   # 
   # # Read time points from R peaks Kubios output
   # main_exg2_peaks_tmp <- NULL
-  # main_exg2_peaks_tmp <- readMat(paste(path_data, part, '/crop/Kubios/', part, '_main_exg2_hrv.mat', sep = '')) # read Kubios matlab output into R
+  # main_exg2_peaks_tmp <- readMat(paste(path_data, part, '/', part, '_main_exg2_hrv.mat', sep = '')) # read Kubios matlab output into R
   # main_exg2_peaks_s <- as.vector(main_exg2_peaks_tmp$Res[[4]][[2]][[2]]) # extract tmp from Res structure in  matlab
   # main_exg2_peaks_s_list[[part]] <- main_exg2_peaks_s
 
