@@ -45,15 +45,15 @@ $ https://github.com/SKunzendorf/0303_INCASI.git
 
 **2.** Create the following file structure on your computer
 
-Our code consists of the Rproject `0303_INCASI`, which containts 6 file paths:
-* **_data** (data for each participant; can be provided upon request)
+Our code consists of the Rproject `0303_INCASI`, which contains 6 file paths:
+* **_data** (output from Kubios analysis for each participant; can be provided upon request)
 * **_dataframes** (saved dataframes from analysis)
 * **_figures** (saved plots)
 * **_functions** (computed functions for analysis)
 * **_scripts** (scripts for analysis)
 * **_variables** (data for additional variables of inter-individual differences: heart rate variability, trait anxiety, interoceptive awareness)
 
-- Having downloaded the 6 folders, put them all in a parent folder called **0303_INCASI**
+- Store the files in their respective folder (as indicated in the git comment), and put the 6 folders in a parent folder called **0303_INCASI**
 - For the main analysis (skipping Preprocessing) directly open script `0303_INCASI_analysis.Rmd`
 - Set your working directory to `setwd(".../0303_INCASI")` (INCASI setup)
 - The file pathways are then created within the script (INCASI setup)
@@ -67,6 +67,8 @@ The scripts were run in the following order. Preprocessing can be skipped since 
 ## 3.1. Preprocessing
 
 ### `0303_INCASI_preprocess_a.Rmd`
+
+* script to load raw behavioural data and prepare ECG data for analysis in Kubios
 
 *Script outline:*
 
