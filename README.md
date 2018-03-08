@@ -17,7 +17,7 @@ Stella Kunzendorf 1,2 , Felix Klotzsche 3 , Mert Akbal 2 , Arno Villringer 2,3, 
 
 **Corresponding author**: Stella Kunzendorf
 
-For access to participants' raw data please contact: stella.kunzendorf@charite.de
+For access to participants' data please contact: stella.kunzendorf@charite.de
 
 
 **Abstract**
