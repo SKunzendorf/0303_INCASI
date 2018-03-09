@@ -1,0 +1,336 @@
+---
+title: "0303_INCASI_preprocess_a"
+author: "Stella"
+date: "03 March 2018"
+output: html_document
+---
+
+
+### INCASI SETUP
+
+#### General setup
+```{r INCASI_setup, message = FALSE}
+#--------------------------------------------------------------------------
+# Clear workspace
+rm(list=ls())
+
+#--------------------------------------------------------------------------
+# Set working directory
+getwd()
+setwd("/Volumes/StellaDisk/INCASI_desktop/01_Analysis/0303_INCASI") # Stella's laptop
+
+#--------------------------------------------------------------------------
+# Define paths
+path_wd 	 <- getwd()
+path_data <- paste(path_wd,"/_data/",sep="") 
+path_scripts  <- paste(path_wd,"/_scripts/",sep="")
+path_functions  <- paste(path_wd,"/_functions/",sep="") 
+path_dataframes <- paste(path_wd,"/_dataframes/",sep="") 
+path_variables <- paste(path_wd,"/_variables/",sep="")
+path_figures <- paste(path_wd,"/_figures/",sep="") 
+
+#--------------------------------------------------------------------------
+# load packages
+source(paste(path_scripts,"loadPackages.R",sep="")) # installed Rpackages
+
+#--------------------------------------------------------------------------
+# load settings for ggplot
+source(paste(path_scripts,"loadTheme.R",sep="")) # ggplot theme
+source(paste(path_scripts,"loadColors.R",sep="")) # ggplot colours
+
+#--------------------------------------------------------------------------
+# define list of participants
+inc_list <- as.factor(dir(path_data)) #create inc_list with all inc04 - inc50 
+
+#--------------------------------------------------------------------------
+# specify ECG sampling frequency (in Hz)
+ecg_sf <-  2048 # --> 1 datapoint every 0.4882812 ms (1000/2048)
+
+#--------------------------------------------------------------------------
+```
+
+
+## 1. BEHAVIOURAL DATA
+
+### 1.1. LOAD BEHAVIOURAL DATA IN LOG FILE
+
+* Load behavioural data (from stimulation) and create log dataframe (with 3 subsets for each experimental period: `log_encode`, `log_recall`, `log_rate`)
+
+define column names:
+* block: which experimental period: 1=encoding, 2=recognition, 3=rating
+* trialnum: index of trial (1-120) per participant
+* stimnum: EmoPic number of picture
+* real_newold: 1 = new picture, 2 = old picture (recognition phase)
+* valence: neutral, positiv, negativ
+* dummy1: dummy row
+* fixonset: timepoint of fixation cross onset
+* piconset: timepoint of picture onset
+* picoffset: timepoint of picture offset
+* click1onset: timepoint of key press (= click) to prompt next picture
+* click2onset: timepoint of second rating answer (valence) in rating period
+* recallonset. timepoint of recognition answer
+* rate_arousal: timepoint of first rating answer (arousal) in rating period
+* vp: participant ID (inc04 - inc50)
+
+```{r load BEHAV}
+#--------------------------------------------------------------------------
+#add gender information
+dat_gender <- read.csv(file = paste(path_variables, 'INCASI_gender.csv', sep = ""), sep = ';')
+#--------------------------------------------------------------------------
+# create loop to load all dat files in one big logfile
+log <- NULL
+log_encode <- NULL
+matinfo <- NULL
+
+for (part in inc_list[1:length(inc_list)]) {  # loop over inc_list (over each participant)
+
+    #--------------------------------------------------------------------------
+    # for each part: import dat.files from inc_list in log_cur
+    log_cur <- NULL
+    log_cur <- read.csv(file = paste(path_data, part, '/raw/behav/inc1', part, '.dat', sep=""), header=FALSE, sep = '\t') # read dat files into log_cur
+    log_cur$vp <- part  # create new column vp
+    colnames(log_cur) <- c ('block', 'trialnum', 'stimnum', 'real_newold', 'valence', 'dummy1', 'fixonset', 'piconset', 'picoffset', 'click1onset', 'click2onset', 'recallonset', 'dummy3', 'dummy4', 'answerX','rate_arousal','vp')
+
+    # encode vector valence (values 1, 2, 3) into factor
+    log_cur$valence <- as.factor(log_cur$valence) # before transforming vector into factor: check: val <- valence  sum(val == as.factor(log$valence))
+    levels(log_cur$valence) <- c('neutral', 'positiv', 'negativ') # check factor levels: 1,2,3 -> name levels in correct order
+
+    # add gender
+    log_cur$gender <- (dat_gender$sex[dat_gender$vp == part])
+    #--------------------------------------------------------------------------
+    # read markers of stimulation (using R.matlab package)
+    matinfo_cur <- NULL
+    matinfo_cur <- readMat(con = paste(path_data, part, '/raw/behav/inc1', part, '.mat', sep="")) # read mat files in matinfo_cur
+    matinfo[[part]] <- matinfo_cur
+
+    # check length between markers
+    logonset_s <- as.numeric(matinfo_cur$const[6]) # sessionStart in sec (=session start: timeinterval since start matlab, in sec)
+    logoffset_s <- as.numeric(matinfo_cur$const[7]) # sessionStop in sec
+
+    log_cur$logduration_s <- logoffset_s - logonset_s  # duration of logfile (= duration of total experimental phase: enc+ rec+ rate)
+
+    #--------------------------------------------------------------------------
+    # crop time points of log file -> set in relation to ecg_main onset (onset of ecg recording)
+    # substract log_onset (+convert in sec) to align begin of logfile to timepoint of start trigger 140 in ECG recording
+    log_cur$fixonset_ecgtime_s = ((log_cur$fixonset/1000) -logonset_s)
+    log_cur$piconset_ecgtime_s = ((log_cur$piconset/1000) -logonset_s)
+    log_cur$picoffset_ecgtime_s = ((log_cur$picoffset/1000) -logonset_s)
+    log_cur$click1onset_ecgtime_s = ((log_cur$click1onset/1000) -logonset_s) # click1onset (1. click since start matlab, in sec) - logonset => Beginn log equals timepoint of trigger 140 to ecg recording
+    log_cur$click1onset_ecgtime_dpt <-  log_cur$click1onset_ecgtime_s * ecg_sf
+    log_cur$click2onset_ecgtime_s = ((log_cur$click2onset/1000) -logonset_s)
+    log_cur$recallonset_ecgtime_s = ((log_cur$recallonset/1000) -logonset_s)
+    log_cur$dur_enc_min <- ((log_cur$click1onset_ecgtime_s[120]) - (log_cur$click1onset_ecgtime_s[1])) / 60 # count time from first to last click
+    #--------------------------------------------------------------------------
+    # create one logframe log for all inc under inc_list
+    log <- rbind(log, log_cur) # create new logframe, by row-binding each new log_cur to log
+
+}
+#--------------------------------------------------------------------------
+# turn columns into factors:
+log$vp <- as.factor(log$vp)
+
+#--------------------------------------------------------------------------
+## create log subsets for all 3 phases
+log_encode <- NULL
+log_recall <- NULL
+log_rate <- NULL
+
+log_encode <- subset(log, log$block == 1) # encoding
+log_recall <- subset(log, log$block == 2) # recall
+log_rate <- subset(log, log$block == 3) # rating
+
+#--------------------------------------------------------------------------
+# change column names log_recall:
+colnames(log_recall)[colnames(log_recall) == 'answerX'] <- 'answ_newold' # participants' answer (new, old) in recognition phase
+
+# change column names log_rate:
+colnames(log_rate)[colnames(log_rate) == 'answerX'] <- 'rate_valence' # participants' valence rating (neutral, neg, pos) in rating phase
+
+#--------------------------------------------------------------------------
+```
+
+
+### 1.2. DEFINE DETECTION VARIABLES - HIT, MISS, FA, CR (for analysis recognition phase)
+
+* define participants' (vp) answers for "new" = 1, "old" = 2
+* create detection variables: HIT, MISS, FA, CR
+* add detection variables to log_recall, log_encode
+```{r genVariables}
+#--------------------------------------------------------------------------
+# change answer code (column answ_newold) for "old" from "-1" to "2"
+log_recall$answ_newold[log_recall$answ_newold==-1] <- 2 # select column answ_newold from log_recall, all values of column answ_newold that are "-1" <- overwrite with "2"
+
+#--------------------------------------------------------------------------
+# create new column answercheck -> to compare vps' answer (new/old) with actual picture status (new/old)
+# check: pictures shown (log_recall$real_newold) == participants' answers (log_recall$answ_newold) (log_recall$answercheck: TRUE, FALSE)
+log_recall$answercheck <- NA # create new column answercheck, fill with NA
+log_recall$answercheck[log_recall$block == 2] <- log_recall$real_newold[log_recall$block == 2] == # select values from column real_newold for block 2 (new, old pictures shown in block 2)
+  log_recall$answ_newold[log_recall$block == 2] # select values from column answ_newold for block 2 (participants answer for new, old pictures in block 2)
+
+#--------------------------------------------------------------------------
+# create 4 vectors for 2x2 table -> signal (new, old) ~ answer (correct or wrong)
+idx_new_wrong  <-  which(log_recall[,1]==2 & log_recall[,4]==1 & log_recall[,15]==2) #real new, but answered old
+idx_new_right  <-  which(log_recall[,1]==2 & log_recall[,4]==1 & log_recall[,15]==1) #real new AND answered new
+idx_old_wrong  <-  which(log_recall[,1]==2 & log_recall[,4]==2 & log_recall[,15]==1) #real old, but answered new
+idx_old_right  <-  which(log_recall[,1]==2 & log_recall[,4]==2 & log_recall[,15]==2) #real old AND answered old
+#--------------------------------------------------------------------------
+
+# create new column "answer" to check for correct answers overall (old & new right = 1, old & new wrong = 0)
+log_recall$answer <-  -9999;
+log_recall$answer[idx_new_wrong] <-  0; # wrong
+log_recall$answer[idx_old_wrong] <-  0; # wrong
+log_recall$answer[idx_new_right] <-  1; # right
+log_recall$answer[idx_old_right] <-  1; # right
+
+#--------------------------------------------------------------------------
+# create new column "detection" to check for 4 cases (HIT = correctly recalled old pictures)
+log_recall$detection  <-  -9999;
+log_recall$detection[idx_new_wrong] <-  "FA";   # false alarm (new pictures, falsely detected as old)
+log_recall$detection[idx_old_wrong] <-  "MISS"; # miss (old pictures, not detected)
+log_recall$detection[idx_new_right] <-  "CR";   # correct rejected (new pictures, correctly detected as new)
+log_recall$detection[idx_old_right] <-  "HIT";  # hit (old pictures, correctly detected as old)
+
+#--------------------------------------------------------------------------
+# set all remaining values in answ_newold to NA, except values from block 2 
+
+if (sum(!is.na(log_recall$answ_newold[log_recall$block != 2]))){
+  print('WARNING: WE HAVE NEWOLD RATINGS IN BLOCKS 1 AND 3!!!')
+} else {
+  log_recall$answ_newold[log_recall$block != 2] <- NA
+}
+
+#--------------------------------------------------------------------------
+# create dataframe log_encode_detPerf:
+answer_det <- log_recall[ , c('vp', 'stimnum', 'answer', 'detection')]
+
+# add detection parameters to log_encode: create joint dataframe log_encode + detPerf (from recall)
+log_encode <- left_join(log_encode, answer_det, by = c('vp', 'stimnum'))
+
+
+#--------------------------------------------------------------------------
+## save log files:
+
+# save(log_encode, log_recall, log_rate, file = paste(path_dataframes,"logfiles_all.RData", sep=""))
+
+# save log_encode (with detection parameters)
+#save(log_encode, file = paste(path_dataframes,'log_encode.RData', sep=""))
+
+# save log_recall (with detection parameters)
+#save(log_recall, file = paste(path_dataframes,'log_recall.RData', sep=""))
+
+# save log_rate (with detection parameters)
+#save(log_rate, file = paste(path_dataframes,'log_rate.RData', sep=""))
+#--------------------------------------------------------------------------
+```
+
+
+### 1.3. ANALYSE DETECTION PERFORMANCE (recognition phase)
+
+* 1. `perf_all`: calculate answer performance (answer_mean, -length, -sd, -minperf) for each vp
+* 2. `perf_det`: detection performance for each vp, define function `dprime`: d' = Z(Hit) - Z(false alarm) 
+* 3. `perf_val`: detection performance for each vp and valence
+```{r detectPerform Behav}
+#--------------------------------------------------------------------------
+# 1. perf_all: answer performance vor each vp: create table: vp ~ answer (calculate for variable answer: mean, length, sd, minperf)
+for (ivp in inc_list[1:length(inc_list)]) { 
+  minperf <- function(x){qbinom(0.975,length(x),0.5)/length(x)}  # calculate value for min performance   
+  m1 <- melt(log_recall,id=c("vp"),measure='answer') # melt subset of log, block == 2 for vp, measure variable = answer (wrong = 0, correct = 1)
+  perf_all <- cast(m1, formula = vp ~ variable,c(mean,length,sd,minperf)) # create table vp ~ answer=variable, with answer_mean, -length, -sd, -minperf
+}
+
+#--------------------------------------------------------------------------
+# detection performance for each vp: create table: vp ~ detection 
+
+# create function to calculate values of 2x2 table: sum of each case (HIT, MISS, FA, CR) in relation to actual count of new bzw. old pictures
+# divide length of x (= sum of old and new pictures in total = 120) by 2 -> count of either new (60/pers) or old pictures (60/pers)
+# correct for infinite d'
+# strategy (Hautus, 1995; Miller, 1996): add 0.5 to all data cels regardless of whether zeroes are present, add 1 to length of x
+
+
+falarm <- function(x){(sum(x == 'FA')+0.5)/((0.5*length(x))+1)} # sum of FA / half length of x (=sum new pictures)
+creject <- function(x){(sum(x == 'CR')+0.5)/((0.5*length(x))+1)} # sum of CR / half length of x (=sum new pictures)
+hit <- function(x){(sum(x == 'HIT')+0.5)/((0.5*length(x))+1)} # sum of HIT / half length of x (=sum old pictures)
+miss <- function(x){(sum(x == 'MISS')+0.5)/((0.5*length(x))+1)} # sum of MISS / half length of x (=sum old pictures)
+
+# create function to calculate d prime -> d' = Z(Hit) - Z(false alarm) 
+dprime <- function(hit,fa) {qnorm(hit) - qnorm(fa)}
+
+#--------------------------------------------------------------------------
+# 2. perf_det: detection performance for each vp: create table vp ~ detection (calculate for variable detection: hit, miss, falarm, creject)
+m2 <- melt(log_recall,id=c("vp", 'valence'), measure='detection')
+perf_det <- cast(m2, formula = vp ~ variable, c(hit, miss,falarm, creject))
+perf_det$dprime <- dprime(perf_det$detection_hit, perf_det$detection_falarm) # add column dprime
+
+#--------------------------------------------------------------------------
+# 3. perf_val: detection performance for each vp and valence: create table vp*valence ~ detection (calculate for variable detection: hit, miss, falarm, creject)
+perf_val <- cast(m2, formula = vp*valence ~ variable, c(hit, miss,falarm, creject))
+perf_val$dprime <- dprime(perf_val$detection_hit, perf_val$detection_falarm)  # add column dprime
+
+#--------------------------------------------------------------------------
+# Remove participant if performance is below chance level
+#idx <- which(data$vp==9)
+#data <- data[-idx,]
+
+#--------------------------------------------------------------------------
+# save files
+# save(perf_all,file = paste(path_dataframes,'detPerf_overall.RData', sep=''))
+# save(perf_det,file = paste(path_dataframes,'detPerf_dprime.RData', sep=''))
+# save(perf_val, file = paste(path_dataframes,'detPerf_dprimeval.RData', sep=''))
+```
+
+
+## 2. ECG DATA
+
+### 2.1 LOAD ECG
+
+* Import ECG data from EEGlab:
+  * export.csv: dataframe with 1 column per ECGlead (EXG1, EXG2, EXG3)
+  * events.csv: dataframe with markers 
+* Prepare one lead columns for each session (resting, main experiment, heart beat perception task) for subsequent Kubios analysis
+* after this code chunk: open Kubios to detect Rpeaks
+```{r load ECG}
+#--------------------------------------------------------------------------
+# import ecg files (from eeglab)
+
+# inc_export: create loop to import all inc_export, inc_events (markers) from inc_list
+ecg_exp <- NULL #define variable ecg_ecp for loop
+ecg_events <- NULL 
+
+for (part in inc_list[1:length(inc_list)]) { 
+  # read ecg files in ecg_exp
+  ecg_exp <- read.csv(file = paste(path_data, part, '/crop/', part, '_export.csv', sep=""), sep = '\t') 
+  
+  # read ecg files in ecg_events
+  ecg_events<- read.csv(file = paste(path_data, part, '/crop/', part, '_events.csv', sep=""), sep = '\t') 
+
+  #--------------------------------------------------------------------------
+  # create loop for files with 5 events (inc06-inc10: recording stopped too quickly, last event (marker) is missing)
+  if (dim(ecg_events)[1] < 6) {
+    ecg_events [6, 1] <- 6
+    ecg_events [6, 2] <- 152
+    ecg_events [6, 3] <- dim(ecg_exp)[1]
+    ecg_events [6, 4] <- 6
+  }  
+  
+  #--------------------------------------------------------------------------
+  # create subsets of ecg data: rest, main, hbp, based on ecg_events
+  ecg_rest <- ecg_exp[ecg_events[1,3]:ecg_events[2,3], 1:4]
+  ecg_main <- ecg_exp[ecg_events[3,3]:ecg_events[4,3], 1:4]
+  ecg_hbp <- ecg_exp[ecg_events[5,3]:ecg_events[6,3], 1:4]
+  
+  #--------------------------------------------------------------------------
+  # write 1 column tables for the second ECG lead (#EXG2) for Kubios (for resting, main, hbp phase)
+
+  # ecg_rest:
+  write.table(ecg_rest[,3], paste(path_data, part, '/crop/Kubios/', part, '_rest_exg2.txt', sep = ''), row.names = F, col.names = F)
+  
+  # ecg_main:
+  write.table(ecg_main[,3], paste(path_data, part, '/crop/Kubios/', part, '_main_exg2.txt', sep = ''), row.names = F, col.names = F);
+    
+  # ecg_hbp:
+  write.table(ecg_hbp[,3], paste(path_data, part, '/crop/Kubios/', part, '_hbp_exg2.txt', sep = ''), row.names = F, col.names = F);
+
+}
+
+#--------------------------------------------------------------------------
+```
