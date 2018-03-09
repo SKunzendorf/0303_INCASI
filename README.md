@@ -1,7 +1,8 @@
 # Active vision varies across the cardiac cycle
 
 **Authors:**
-Stella Kunzendorf <sup>1,2</sup> , Felix Klotzsche <sup>2,3 , Mert Akbal <sup>2 , Arno Villringer <sup>2,3, Sven Ohl <sup>4,5, & Michael Gaebler <sup>2,3,6
+Stella Kunzendorf <sup>1,2</sup> , Felix Klotzsche <sup>2,3</sup> , Mert Akbal <sup>2</sup> , 
+Arno Villringer <sup>2,3</sup>, Sven Ohl <sup>4,5</sup>, & Michael Gaebler <sup>2,3,6</sup>
 
 <sup>1</sup> Charité – Universitätsmedizin Berlin
 
