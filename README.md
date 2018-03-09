@@ -1,23 +1,23 @@
 # Active vision varies across the cardiac cycle
 
-**Authors**
-Stella Kunzendorf <sup>1,2</sup> , Felix Klotzsche 3 , Mert Akbal 2 , Arno Villringer 2,3, Sven Ohl 4,5, & Michael Gaebler 2,3,6
+**Authors:**
+Stella Kunzendorf <sup>1,2</sup> , Felix Klotzsche <sup>2,3 , Mert Akbal <sup>2 , Arno Villringer <sup>2,3, Sven Ohl <sup>4,5, & Michael Gaebler <sup>2,3,6
 
-1 Charité – Universitätsmedizin Berlin
+<sup>1</sup> Charité – Universitätsmedizin Berlin
 
-2 MPI CBS
+<sup>2</sup> MPI CBS
 
-3 Berlin School of Mind and Brain
+<sup>3</sup> Berlin School of Mind and Brain
 
-4 Bernstein Center of Computational Neuroscience, Berlin
+<sup>4</sup> Bernstein Center of Computational Neuroscience, Berlin
 
-5 Humboldt-Universität zu Berlin
+<sup>5</sup> Humboldt-Universität zu Berlin
 
-6 Universität Leipzig
+<sup>6</sup> Universität Leipzig
 
 **Corresponding author**: Stella Kunzendorf
 
-For access to participants' data please contact: stella.kunzendorf@charite.de
+For access to participants' data please contact: stella.kunzendorf[-at-]charite.de
 
 
 **Abstract**
