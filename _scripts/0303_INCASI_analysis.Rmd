@@ -40,8 +40,28 @@ rm(list=ls())
 
 #--------------------------------------------------------------------------
 # Set working directory
-getwd()
-setwd("/Volumes/StellaDisk/INCASI_desktop/01_Analysis/0303_INCASI") # Stella's laptop
+
+# change this param if you want to set the path manually
+auto_set_wd <- menu(c("Yes", "No"), title="Shall I set WD automatically?", graphics = T)
+
+#get path to current script
+script.dir <- getSrcDirectory(function(x) {x})
+
+if (auto_set_wd == 1){
+  setwd(script.dir)
+  setwd('..')
+} else {
+  cat("WD is expected to be the cloned '0303_INCASI' folder on your machine in order to find dependencies.")
+  own_wd <- readline('Please specify full path for WD: ')
+  print(own_wd)
+  tryCatch(setwd(own_wd),
+           error = function(err) {
+             setwd(script.dir)
+             setwd('..')
+             message(err)
+             message('\nI try to set WD automatically.')
+           })
+}
 
 #--------------------------------------------------------------------------
 # Define paths
