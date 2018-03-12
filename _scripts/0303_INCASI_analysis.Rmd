@@ -232,7 +232,7 @@ You can consider to decrease the number of bootstrap repetitions (default is 100
 # bootstrap main analysis
 
 
-nBoot  <- 10 # number of repition of bootstrap procedure
+nBoot  <- 10000 # number of repition of bootstrap procedure
 vplist <- unique(log_encode$vp) # list of participants
 
 # set up output variables
