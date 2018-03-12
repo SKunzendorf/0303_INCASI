@@ -39,34 +39,14 @@ SUPPLEMENTARY ANALYSIS
 rm(list=ls())
 
 #--------------------------------------------------------------------------
-# Set working directory
-
-# change this param if you want to set the path manually
-auto_set_wd <- menu(c("Yes", "No"), title="Shall I set WD automatically?", graphics = T)
-
-#get path to current script
-script.dir <- getSrcDirectory(function(x) {x})
-
-if (auto_set_wd == 1){
-  setwd(script.dir)
-  setwd('..')
-} else {
-  cat("WD is expected to be the cloned '0303_INCASI' folder on your machine in order to find dependencies.")
-  own_wd <- readline('Please specify full path for WD: ')
-  print(own_wd)
-  tryCatch(setwd(own_wd),
-           error = function(err) {
-             setwd(script.dir)
-             setwd('..')
-             message(err)
-             message('\nI try to set WD automatically.')
-           })
-}
+# Set working directory to containing folder ('0303_INCASI')
+setwd('..')
+cat('Current WD is: ', getwd())
 
 #--------------------------------------------------------------------------
 # Define paths
 path_wd 	 <- getwd()
-path_data <- paste(path_wd,"/_data/",sep="") # path to file: _data
+path_data <- paste("../0303_INCASI_data/",sep="") # path to file: _data
 path_scripts  <- paste(path_wd,"/_scripts/",sep="") # path to file: _scripts
 path_functions  <- paste(path_wd,"/_functions/",sep="") # path to file: _functions
 path_dataframes <- paste(path_wd,"/_dataframes/",sep="") # path to file: _dataframes
@@ -241,6 +221,7 @@ bwparam <- 20 # bandwith parameter
 # a) run whole bootstrap procedure
 # start loop
 for(i in 1:nBoot){ # repeat bootstrap procedure nBoot times
+  tmme <- system.time({
   vplist_boot <- sample(vplist,replace=TRUE) # draw bootstrap sample
   buffer <- c()
   for(j in 1:length(vplist_boot)){ # compute circular density for each participant in sample
@@ -250,7 +231,11 @@ for(i in 1:nBoot){ # repeat bootstrap procedure nBoot times
     buffer  <- rbind(buffer,readout,deparse.level=0)
   }
   buffer  <- colMeans(buffer)
-  out <- rbind(out,buffer)
+  out <- rbind(out,buffer)})
+  if (i%%100 == 0) {
+    print(paste('Iteration ', num2str(i, fmt=0), ' of ', num2str(nBoot, fmt=0)))
+    print(paste('Time until end: ', num2str(tmme[3]*(nBoot-i)/60), 'minutes'))
+  }
 }
 
 # save(res50x, file = paste(path_dataframes,"res50x.RData", sep="")) # save density
