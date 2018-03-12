@@ -27,6 +27,7 @@ Perception and cognition oscillate with fluctuating bodily states. For example, 
 
 For a detailed description of the study, have a look at our manuscript on bioRxiv: (coming soon).
 
+---
 
 ## 1. Prerequisites
 Programs you need to install prior to the analysis:
@@ -44,25 +45,36 @@ Programs used for preprocessing the cardiac data (participants' preprocessed car
 $ https://github.com/SKunzendorf/0303_INCASI.git
 ```
 
-**2.** Create the following file structure on your computer
+**2.** Maintain the following file structure on your computer
 
-Our code consists of the Rproject `0303_INCASI`, which contains 6 file paths:
-* **_data** (output from Kubios analysis for each participant; can be provided upon request)
+`0303_INCASI` contains 5 file paths:
 * **_dataframes** (saved dataframes from analysis)
 * **_figures** (saved plots)
 * **_functions** (computed functions for analysis)
 * **_scripts** (scripts for analysis)
 * **_variables** (data for additional variables of inter-individual differences: heart rate variability, trait anxiety, interoceptive awareness)
 
-- Store the files in their respective folder (as indicated in the git comment), and put the 6 folders in a parent folder called **0303_INCASI**
-- For the main analysis (skipping Preprocessing) directly open script `0303_INCASI_analysis.Rmd`
-- Set your working directory to `setwd(".../0303_INCASI")` (INCASI setup)
-- The file pathways are then created within the script (INCASI setup)
+- if you want to run your own preprocessing, please contact the author (SK; details see above) for the (almost) raw data (output from Kubios analysis for each participant; **0303_INCASI_data**)
+- keep this data folder (**0303_INCASI_data**) in the same directory as the cloned repo (**0303_INCASI**)
+- your folder structure should look like this:
+...
+  |--`0303_INCASI`
+     |--`_dataframes`
+     |--`_figures`
+     |--`_functions`
+     |--`_scripts`
+     |--`_variables`
+  |--`0303_INCASI_data`
+     |--`inc04`
+     |--`inc05`
+     ...
+- For the main analysis (skipping Preprocessing), directly open script `0303_INCASI_analysis.Rmd` (data folder **0303_INCASI_data** not needed)
+- The file pathways are then created within the script (setup chunk)
 
 
 ## 3. Scripts
 
-The scripts were run in the following order. Preprocessing can be skipped since output dataframes are provided under `_dataframes`. Main analysis can be run directly. 
+The scripts are to be run in the following order. Preprocessing can be skipped since output dataframes are provided under `_dataframes`. Main analysis can be run directly. 
 
 
 ## 3.1. Preprocessing
@@ -117,7 +129,7 @@ The scripts were run in the following order. Preprocessing can be skipped since 
 **1.C.** Additional variables (inter-individual variables, rating values) are added to the dataframe
 
 
-**2. PREPARE SHORT DATA FRAME: `DATA_BINS**
+**2. PREPARE SHORT DATA FRAME: `DATA_BINS`**
 * Short df with one row per participant
 
 

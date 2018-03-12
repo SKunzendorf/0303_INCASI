@@ -13,10 +13,11 @@
 
 # 2. EXCLUDE SUBJECT WITH HYPERTONUS (HTN)
   # 1 participant with HTN ("inc40", position 37)
-  inc_cuthtn <- inc_list[-c(37)] 
+  inc_htn <- c(37)
+  inc_cuthtn <- inc_list[-inc_htn] 
   
 # 3. clean inc list without non-physiologic states: without HYPER HR, HTN
-  inc_clean <- inc_list[-c(inc_hyperHR, 37)] 
+  inc_clean <- as.factor(inc_list[-c(inc_hyperHR, inc_htn)])
 
 
 #----------------------------------------------------------------------------
