@@ -52,6 +52,7 @@ cat('Current WD is: ', getwd())
 
 #--------------------------------------------------------------------------
 # Define paths
+# The warning regarding the WD being set back after finishing the chunk can be ignored.
 path_wd 	 <- getwd()
 path_data <- paste("../0303_INCASI_data/",sep="") # path to file: _data
 path_scripts  <- paste(path_wd,"/_scripts/",sep="") # path to file: _scripts
