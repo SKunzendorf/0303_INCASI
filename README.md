@@ -59,15 +59,15 @@ $ https://github.com/SKunzendorf/0303_INCASI.git
 - your folder structure should look like this:  
 ...  
 ...|`0303_INCASI`  
-...|...|`_dataframes`  
-...|...|`_figures`  
-...|...|`_functions`  
-...|...|`_scripts`  
-...|...|`_variables`  
+...||-|`_dataframes`  
+...||-|`_figures`  
+...||-|`_functions`  
+...||-|`_scripts`  
+...||-|`_variables`  
 ...|`0303_INCASI_data`  
-...|...|`inc04`  
-...|...|`inc05`  
-     ...
+...||-|`inc04`  
+...||-|`inc05`  
+...||-|...
 - For the **main analysis** (skipping preprocessing), directly open script `0303_INCASI_analysis.Rmd` (data folder **0303_INCASI_data** not needed)
 - **Caveat**: If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
 - The file pathways are then created within the script (setup chunk)
