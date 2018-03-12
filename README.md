@@ -30,10 +30,10 @@ For a detailed description of the study, have a look at our manuscript on bioRxi
 
 ## 1. Prerequisites
 Programs you need to install prior to the analysis:
-- Our code is computed in the R Statistical Environment with **RStudio version 1.0.136** (RStudio Team, 2016)
+- Our code is computed in the R Statistical Environment (v3.4.3) with **RStudio version 1.0.136** (RStudio Team, 2016)
 
 Programs used for preprocessing the cardiac data (participants' preprocessed cardiac data available upon request):
-- **EEGlab** was used as signal analysis tool to read bdf files from ECG recording with an ActiveTwo AD amplifier (Biosemi, Amsterdam, Netherlands)
+- **EEGlab** (Delorme & Makeig, 2004) was used as signal analysis tool to read bdf files from ECG recording with an ActiveTwo AD amplifier (Biosemi, Amsterdam, Netherlands)
 - Electrical events indicating the beginning of each cardiac cycle (R peaks) were extracted from the ECG signal with **Kubios 2.2** (Tarvainen et al., 2014, <http://kubios.uef.fi/>). 
 
 
@@ -243,3 +243,12 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 * Run one-sided ttests for normative vs. individual ratings across each valence level
 
 **2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Supplementary Figure 1*)
+
+
+
+#### REFERENCES
+
+Delorme, A., & Makeig, S. (2004). EEGLAB: an open sorce toolbox for analysis of single trail EEG dynamics including independent component analysis. *Journal of Neuroscience Methods, 134*, 9–21.[URL](https://sccn.ucsd.edu/eeglab/download/eeglab_jnm03.pdf).
+R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. [https://www.R-project.org/].
+RStudio Team (2016). RStudio: Integrated Development for R. RStudio, Inc., Boston, MA. [http://www.rstudio.com/].
+Tarvainen M. P., Niskanen J. P., Lipponen J. A., Ranta-Aho P. O., Karjalainen P. A. (2014). Kubios HRV – heart rate variability analysis software. *Comput. Methods Programs Biomed., 113*, 210–220. [URL](https://www.sciencedirect.com/science/article/pii/S0169260713002599?via%3Dihub).
