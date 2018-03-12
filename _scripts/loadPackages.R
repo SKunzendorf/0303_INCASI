@@ -29,6 +29,9 @@ INCASI_packages <- c(
 for(pkg in INCASI_packages) {
   if(!require(pkg, character.only = T)) {
     install.packages(pkg, dependencies = T, repos="http://cran.rstudio.com/")
+    require(pkg, character.only = T)
+  } else {
+    require(pkg, character.only = T)
   }
 }
 

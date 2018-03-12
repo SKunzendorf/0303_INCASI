@@ -207,9 +207,14 @@ Bootstrap procedure:
 
 * This bootstrap procedure is repeated 10000 times
 * 95% confidence intervals are determined as 2.5% and 97.5% percentiles from the distribution of mean circular densities
+
+Please be aware that this might result in quite extensive run-time, depending on the system and machine that you are using. Will be particularly slow for Windows as the currently implemented parallelization does not work on Windows (script won't be aborted but run sequentially >> slow).
+You can consider to decrease the number of bootstrap repetitions (default is 10000).
 ```{r boostrap}
 #--------------------------------------------------------------------------
 # bootstrap main analysis
+
+
 nBoot  <- 10000 # number of repition of bootstrap procedure
 vplist <- unique(log_encode$vp) # list of participants
 
@@ -220,23 +225,32 @@ bwparam <- 20 # bandwith parameter
 
 # a) run whole bootstrap procedure
 # start loop
-for(i in 1:nBoot){ # repeat bootstrap procedure nBoot times
-  tmme <- system.time({
-  vplist_boot <- sample(vplist,replace=TRUE) # draw bootstrap sample
-  buffer <- c()
-  for(j in 1:length(vplist_boot)){ # compute circular density for each participant in sample
-    x=circular(log_encode$radclick[which(log_encode$vp==vplist_boot[j])],type="angles",units="radians",modulo="2pi",zero=pi/2,rotation="clock")
-    res50x  <- density(x, bw=bwparam) #Play around with bw. Make chi-square tests and check whether observed coupling is observed for all kinds of bw parameters
-    readout <- as.vector(res50x$y)
-    buffer  <- rbind(buffer,readout,deparse.level=0)
+tot_tme <- system.time({
+  for(i in 1:nBoot){ # repeat bootstrap procedure nBoot times
+    tme <- system.time({
+    vplist_boot <- sample(vplist,replace=TRUE) # draw bootstrap sample
+    buffer <- c()
+    for(j in 1:length(vplist_boot)){ # compute circular density for each participant in sample
+      x=circular(log_encode$radclick[which(log_encode$vp==vplist_boot[j])],type="angles",units="radians",modulo="2pi",zero=pi/2,rotation="clock")
+      res50x  <- density(x, bw=bwparam) #Play around with bw. Make chi-square tests and check whether observed coupling is observed for all kinds of bw parameters
+      readout <- as.vector(res50x$y)
+      buffer  <- rbind(buffer,readout,deparse.level=0)
+    }
+    buffer  <- colMeans(buffer)
+    out <- rbind(out,buffer)})
+    
+    if (i%%round(nBoot/10) == 0) {
+      cat("\014")  
+      print(paste('Iteration ', num2str(i, fmt=0), ' of ', num2str(nBoot, fmt=0)))
+      print(paste('Time until end: ', num2str(tme[3]*(nBoot-i)/60), 'minutes'))
+    }
   }
-  buffer  <- colMeans(buffer)
-  out <- rbind(out,buffer)})
-  if (i%%100 == 0) {
-    print(paste('Iteration ', num2str(i, fmt=0), ' of ', num2str(nBoot, fmt=0)))
-    print(paste('Time until end: ', num2str(tmme[3]*(nBoot-i)/60), 'minutes'))
-  }
-}
+})
+
+cat("\014")
+print(paste('Total runtime: ', num2str(tot_tme[3]/60), 'minutes for ',  
+             num2str(nBoot, fmt=0), ' repetitions'))
+
 
 # save(res50x, file = paste(path_dataframes,"res50x.RData", sep="")) # save density
 # save(out, file = paste(path_dataframes,"out.RData", sep="")) # save bootstrap output
