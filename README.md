@@ -56,19 +56,20 @@ $ https://github.com/SKunzendorf/0303_INCASI.git
 
 - if you want to run your own preprocessing, please contact the author (SK; details see above) for the (almost) raw data (output from Kubios analysis for each participant; **0303_INCASI_data**)
 - keep this data folder (**0303_INCASI_data**) in the same directory as the cloned repo (**0303_INCASI**)
-- your folder structure should look like this:
-...
-  |--`0303_INCASI`
-     |--`_dataframes`
-     |--`_figures`
-     |--`_functions`
-     |--`_scripts`
-     |--`_variables`
-  |--`0303_INCASI_data`
-     |--`inc04`
-     |--`inc05`
+- your folder structure should look like this:  
+...  
+  |--`0303_INCASI`  
+     |--`_dataframes`  
+     |--`_figures`  
+     |--`_functions`  
+     |--`_scripts`  
+     |--`_variables`  
+  |--`0303_INCASI_data`  
+     |--`inc04`  
+     |--`inc05`  
      ...
-- For the main analysis (skipping Preprocessing), directly open script `0303_INCASI_analysis.Rmd` (data folder **0303_INCASI_data** not needed)
+- For the **main analysis** (skipping preprocessing), directly open script `0303_INCASI_analysis.Rmd` (data folder **0303_INCASI_data** not needed)
+- **Caveat**: If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
 - The file pathways are then created within the script (setup chunk)
 
 
@@ -187,6 +188,8 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 ## 3.3. Run analysis
 
 ### `0303_INCASI_analysis.Rmd`
+
+- **Caveat**: If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
 
 *Script outline:*
 
