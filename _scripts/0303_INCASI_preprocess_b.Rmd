@@ -24,11 +24,11 @@ rm(list=ls())
 # Define paths:
 path_wd 	 <- getwd()
 path_data <- paste("../../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
-path_scripts  <- paste("../_scripts/",sep="") # path to file: _scripts
-path_functions  <- paste("../_functions/",sep="") # path to file: _functions
-path_dataframes <- paste("../_dataframes/",sep="") # path to file: _dataframes
-path_variables <- paste("../_variables/",sep="") # path to file: _variables
-path_figures <- paste("../_figures/",sep="") # path to file: _figures
+path_scripts  <- paste("../_scripts/",sep="") # path to folder: _scripts
+path_functions  <- paste("../_functions/",sep="") # path to folder: _functions
+path_dataframes <- paste("../_dataframes/",sep="") # path to folder: _dataframes
+path_variables <- paste("../_variables/",sep="") # path to folder: _variables
+path_figures <- paste("../_figures/",sep="") # path to folder: _figures
 
 #--------------------------------------------------------------------------
 # load packages
