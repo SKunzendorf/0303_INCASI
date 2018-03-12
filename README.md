@@ -249,12 +249,12 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 #### REFERENCES
 
 Delorme, A., & Makeig, S. (2004). EEGLAB: an open sorce toolbox for analysis of single trail EEG dynamics including independent 
-component analysis. *Journal of Neuroscience Methods, 134*, 9–21. *[URL](https://sccn.ucsd.edu/eeglab/download/eeglab_jnm03.pdf).*
+component analysis. *Journal of Neuroscience Methods, 134*, 9–21. *[URL](https://sccn.ucsd.edu/eeglab/download/eeglab_jnm03.pdf)*.
 
 R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, 
-Austria. *[URL]([https://www.R-project.org/).*
+Austria. *[URL](https://www.R-project.org/)*.
 
-RStudio Team (2016). RStudio: Integrated Development for R. RStudio, Inc., Boston, MA. *[URL](http://www.rstudio.com/).*
+RStudio Team (2016). RStudio: Integrated Development for R. RStudio, Inc., Boston, MA. *[URL](http://www.rstudio.com/)*.
 
 Tarvainen M. P., Niskanen J. P., Lipponen J. A., Ranta-Aho P. O., Karjalainen P. A. (2014). Kubios HRV – heart rate variability 
-analysis software. *Comput. Methods Programs Biomed., 113*, 210–220. *[URL](https://www.sciencedirect.com/science/article/pii/S0169260713002599?via%3Dihub).*
+analysis software. *Comput. Methods Programs Biomed., 113*, 210–220. *[URL](https://www.sciencedirect.com/science/article/pii/S0169260713002599?via%3Dihub)*.
