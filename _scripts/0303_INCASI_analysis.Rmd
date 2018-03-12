@@ -46,20 +46,20 @@ rm(list=ls())
 use_own_preproc_data <- FALSE
 
 #--------------------------------------------------------------------------
-# Set working directory to containing folder ('0303_INCASI')
-setwd('..')
-cat('Current WD is: ', getwd())
+# Set working directory to containing folder ('0303_INCASI'):
+
+# knitr automatically sets this to the folder that contains the script 
+# (here 0303_INCASI/_scripts)
 
 #--------------------------------------------------------------------------
-# Define paths
-# The warning regarding the WD being set back after finishing the chunk can be ignored.
+# Define paths:
 path_wd 	 <- getwd()
-path_data <- paste("../0303_INCASI_data/",sep="") # path to file: _data
-path_scripts  <- paste(path_wd,"/_scripts/",sep="") # path to file: _scripts
-path_functions  <- paste(path_wd,"/_functions/",sep="") # path to file: _functions
-path_dataframes <- paste(path_wd,"/_dataframes/",sep="") # path to file: _dataframes
-path_variables <- paste(path_wd,"/_variables/",sep="") # path to file: _variables
-path_figures <- paste(path_wd,"/_figures/",sep="") # path to file: _figures
+path_data <- paste("../../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
+path_scripts  <- paste("../_scripts/",sep="") # path to file: _scripts
+path_functions  <- paste("../_functions/",sep="") # path to file: _functions
+path_dataframes <- paste("../_dataframes/",sep="") # path to file: _dataframes
+path_variables <- paste("../_variables/",sep="") # path to file: _variables
+path_figures <- paste("../_figures/",sep="") # path to file: _figures
 
 #--------------------------------------------------------------------------
 # load packages
@@ -232,7 +232,7 @@ You can consider to decrease the number of bootstrap repetitions (default is 100
 # bootstrap main analysis
 
 
-nBoot  <- 10000 # number of repition of bootstrap procedure
+nBoot  <- 10 # number of repition of bootstrap procedure
 vplist <- unique(log_encode$vp) # list of participants
 
 # set up output variables

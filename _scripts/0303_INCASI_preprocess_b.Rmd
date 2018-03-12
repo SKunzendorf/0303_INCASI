@@ -15,19 +15,20 @@ output: html_document
 rm(list=ls())
 
 #--------------------------------------------------------------------------
-# Set working directory
-getwd()
-setwd("/Volumes/StellaDisk/INCASI_desktop/01_Analysis/0303_INCASI") # Stella's laptop
+# Set working directory to containing folder ('0303_INCASI'):
+
+# knitr automatically sets this to the folder that contains the script 
+# (here 0303_INCASI/_scripts)
 
 #--------------------------------------------------------------------------
-# Define paths
+# Define paths:
 path_wd 	 <- getwd()
-path_data <- paste(path_wd,"/_data/",sep="") 
-path_scripts  <- paste(path_wd,"/_scripts/",sep="")
-path_functions  <- paste(path_wd,"/_functions/",sep="") 
-path_dataframes <- paste(path_wd,"/_dataframes/",sep="") 
-path_variables <- paste(path_wd,"/_variables/",sep="")
-path_figures <- paste(path_wd,"/_figures/",sep="") 
+path_data <- paste("../../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
+path_scripts  <- paste("../_scripts/",sep="") # path to file: _scripts
+path_functions  <- paste("../_functions/",sep="") # path to file: _functions
+path_dataframes <- paste("../_dataframes/",sep="") # path to file: _dataframes
+path_variables <- paste("../_variables/",sep="") # path to file: _variables
+path_figures <- paste("../_figures/",sep="") # path to file: _figures
 
 #--------------------------------------------------------------------------
 # load packages
@@ -253,10 +254,15 @@ callsti <- function (x, df, ivar) {
 # main_exg2_peaks_s <- NULL # create list to contain Rpeaks for each participant (vp)
 # main_exg2_peaks_s_list <- NULL
 main_exg2_dtp <- list() # create list to contain single ecg leads for each vp
-
+print(getwd())
+print(path_data)
 #--------------------------------------------------------------------------
 ## 1. define relative timepoint, R-R interval, and heart rate for each click
 for (part in inc_list[1:length(inc_list)]) {  # loop over participants
+  
+  cat('\014')
+  print(paste('Processing subject', num2str(grep(part, inc_list), fmt=0), 'of',
+               num2str(length(inc_list),fmt=0)))
   
   ## a) create main_exg_2 lists (if not created)
   # # Read single lead with dtp for each vp
