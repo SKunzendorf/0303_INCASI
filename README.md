@@ -314,7 +314,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 
 
-#### REFERENCES
+## 4. REFERENCES
 
 Delorme, A., & Makeig, S. (2004). EEGLAB: an open sorce toolbox for analysis of single trail EEG dynamics including independent component analysis. *Journal of Neuroscience Methods, 134*, 9–21. *[URL] (https://sccn.ucsd.edu/eeglab/download/eeglab_jnm03.pdf)*.
 
@@ -334,7 +334,7 @@ analysis software. *Comput. Methods Programs Biomed., 113*, 210–220. *[URL] (h
 Weissler, A. M., Harris, W. S., & Schoenfield, C. D. (1968). Systolic Time Intervals in Heart Failure in Man. *Circulation, 37(2)*, 149–159. Retrieved from *[URL] (http://circ.ahajournals.org/cgi/content/abstract/37/2/149)*
 
 
-#### License
+## 5. License
 
 This code is being released with a permissive open-source license. You should feel free to use or adapt this code as long as you follow the terms of the license, which are enumerated below. If you make use of or build on the computed functions and/or behavioural/ecg analyses, we would appreciate that you cite the paper.
 
