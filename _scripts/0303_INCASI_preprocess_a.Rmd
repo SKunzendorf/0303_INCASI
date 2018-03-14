@@ -60,23 +60,23 @@ ecg_sf <-  2048 # --> 1 datapoint every 0.4882812 ms (1000/2048)
 
 Define column names:
 
-* block: which experimental period: 1=encoding, 2=recognition, 3=rating
-* trialnum: index of trial (1-120) per participant
-* stimnum: EmoPic number of picture
-* real_newold: 1 = new picture, 2 = old picture (recognition phase)
-* valence: neutral, positiv, negativ
-* dummy1: dummy row
-* fixonset: timepoint of fixation cross onset
-* piconset: timepoint of picture onset
-* picoffset: timepoint of picture offset 
-* click1onset: timepoint of key press (= click) to prompt next picture (in log_encode)
-* click2onset: timepoint of second rating answer (valence) (in log_recall)
-* recallonset. timepoint of recognition answer (in log_recall)
-* dummy3: dummy row
-* dummy4: dummy row
-* answerX: becomes 'answ_newold' (in log_recall), and 'rate_valence' (in log_rate), no meaning in log_encode
-* rate_arousal: timepoint of first rating answer (arousal) in rating period
-* vp: participant ID (inc04 - inc50)
+* **block**: which experimental period: 1=encoding, 2=recognition, 3=rating
+* **trialnum**: index of trial (1-120) per participant
+* **stimnum**: EmoPic number of picture
+* **real_newold**: 1 = new picture, 2 = old picture (recognition phase)
+* **valence**: neutral, positiv, negativ
+* **dummy1**: dummy row
+* **fixonset**: timepoint of fixation cross onset
+* **piconset**: timepoint of picture onset
+* **picoffset**: timepoint of picture offset 
+* **click1onset**: timepoint of key press (= click) to prompt next picture (in log_encode)
+* **click2onset**: timepoint of second rating answer (valence) (in log_recall)
+* **recallonset**: timepoint of recognition answer (in log_recall)
+* **dummy3**: dummy row
+* **dummy4**: dummy row
+* **answerX**: becomes 'answ_newold' (in log_recall), and 'rate_valence' (in log_rate), no meaning in log_encode
+* **rate_arousal**: timepoint of first rating answer (arousal) in rating period
+* **vp**: participant ID (inc04 - inc50)
 
 ```{r load BEHAV}
 #--------------------------------------------------------------------------
@@ -232,9 +232,9 @@ log_encode <- left_join(log_encode, answer_det, by = c('vp', 'stimnum'))
 
 ### 3. ANALYSE MEMORY PERFORMANCE (recognition phase)
 
-* 1. `perf_all`: calculate answer performance (answer_mean, -length, -sd, -minperf) for each vp
-* 2. `perf_det`: detection performance for each vp, define function `dprime`: d' = Z(Hit) - Z(false alarm) 
-* 3. `perf_val`: detection performance for each vp and valence
+1. `perf_all`: calculate answer performance (answer_mean, -length, -sd, -minperf) for each vp
+2. `perf_det`: detection performance for each vp, define function `dprime`: d' = Z(Hit) - Z(false alarm) 
+3. `perf_val`: detection performance for each vp and valence
 ```{r detectPerform Behav}
 #--------------------------------------------------------------------------
 # 1. perf_all: answer performance vor each vp: create table: vp ~ answer (calculate for variable answer: mean, length, sd, minperf)
