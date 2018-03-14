@@ -23,7 +23,7 @@ rm(list=ls())
 #--------------------------------------------------------------------------
 # Define paths:
 path_wd 	 <- getwd()
-path_data <- paste("../../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
+path_data <- paste("../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
 path_scripts  <- paste("../_scripts/",sep="") # path to folder: _scripts
 path_functions  <- paste("../_functions/",sep="") # path to folder: _functions
 path_dataframes <- paste("../_dataframes/",sep="") # path to folder: _dataframes
@@ -54,16 +54,17 @@ ecg_sf <-  2048 # --> 1 datapoint every 0.4882812 ms (1000/2048)
 #----------------------------------------------------------------------------
 # dataframes for analysis encoding 
 load(paste(path_dataframes,"logfiles_all.RData", sep='')) # raw log_encode, log_recall, log_rate 
-load(paste(path_dataframes,"main_exg2_peaks_s_list.RData", sep='')) # ecg lead with peaks (sec)
+load(paste(path_dataframes,"main_exg2_peaks_s_list.RData", sep='')) # ecg lead with peaks (if already created, see below)
 
 # load defined cardiac phases (created in templates_t_q)
-load(paste(path_dataframes,"fin_sys_dur_s.RData", sep="")) # load systole lengths from Rpeak until twave end (created in templates_t_q)
+load(paste(path_dataframes,"fin_sys_dur_s.RData", sep="")) # load interval from Rpeak until twave end (created in templates_t_q)
 load(paste(path_dataframes, "qonR_s.RData", sep="")) # load detected qwave-Rpeak lengths (created in templates_t_q)
 #----------------------------------------------------------------------------
 ```
 
 
 #### 3. Prepare supplementary analysis of picture ratings
+
 * Load normative ratings from csv files
 * `emopics_norms`: df with normative valence and arousal ratings for each picture (180 pictures)
 ```{r rating norm}
@@ -103,6 +104,7 @@ rate_va <- left_join(c_rate_stim, emopics_norms[1:3], by = c('stimnum'))
 
 
 #### 4. Prepare supplementary analysis of covariates
+
 * Age
 * Interoceptive Accuracy (IA)
 * Trait anxiety (STAI)
@@ -197,27 +199,20 @@ data_var <- join_all(list(split_IA, split_stai, split_rmssd), by = c("vp")) # df
 
 # 1. PREPARE LONG DATAFRAME: LOG_ENCODE
 
-1.A. Determine systolic time intervals (STI) based on regression equations (Weissler, 1968)
-
-1.B. Analysis of behaviour relative to heartbeat
-**`log_encode`**: edit log_encode (one row per trial)
+* **`log_encode`**: edit log_encode (one row per trial)
 * `main_exg2_peaks_s_list`: create list with time points from R peaks for each participant
-* `main_exg2_dtp`: create list with complete ecg leads for each participant
 
 
-## 1.A. Compute Regression equations (Weissler, 1968) to determine Systolic time intervals
+## 1.A. Compute Regression equation (Weissler, 1968) to determine pre-ejection period
 
-* Definition of STI (systolic time intervals)
-* *QS2 = PEP + LVET*: the whole electromechanical systole, start: beginning of qRs complex (depolarization ventricles), end: closure of the aortic valve (end of systolic blood outflow)
-* *PEP*: Pre-ejection period: itnerval from onset of ventricular depolarization to beginning of ventricular ejection
-* *LVET*: phase of systole during which blood is ejected into the arterial sysytem (beginning of upstroke to trough of incisurila notch on external carotid arterial pulse)
+**PEP**: Pre-ejection period: interval from onset of ventricular depolarization (q-wave onset) to beginning of ventricular ejection
 
-* Systolic phases of cardiac cycle vary inversly with HR -> corrections for variation in heart rates required
-* Regression equations relate each of the STI to the HR
+* Systolic intervals (pre-ejection period, ejection-period) vary inversly with HR -> corrections for variation in heart rates is required
+* Regression equations relate interval length to the mean HR
 * Most widely applied those by Weissler, Harris and Schoenfeld (1968):  recorded in normal subjects with wide range of resting HR
 
 ```{r function callsti}
-# create function to calculate systolic time intervals (STI) based on Weissler regression equations (1968)
+# create function to calculate pre-ejection period based on Weissler regression equations (1968)
 
 # function callsti
 # x = mean participant HR in bpm
@@ -226,17 +221,13 @@ data_var <- join_all(list(split_IA, split_stai, split_rmssd), by = c("vp")) # df
 
 callsti <- function (x, df, ivar) {
   gen <- df$gender[ivar] # gender
-  if (gen == "m") { # STI for male
-  lvet <- ((-1.7 * x) + 413) / 1000
+  if (gen == "m") { # male
   pep <- ((-0.4 * x) + 131) / 1000
-  qs2 <- ((-2.1 * x) + 546) / 1000
-  } else {  # STI for female
-    lvet <- ((-1.6 * x) + 418) / 1000
+  } else {  # female
     pep <- ((-0.4 * x) + 133) / 1000
-    qs2 <- ((-2.0 * x) + 549) / 1000
     }
-  sit_vec <- c(pep, lvet, qs2)
-  names(sit_vec) <- c("pep", "lvet", "qs2")
+  sit_vec <- c(pep)
+  names(sit_vec) <- c("pep")
   return(sit_vec)
 }
 ```
@@ -245,17 +236,16 @@ callsti <- function (x, df, ivar) {
 
 ## 1.B. Analysis of behaviour relative to heartbeat
 
-### 1.B.1. Define relative timepoint within R-R interval, length of R-R interval, and heart rate for each key press
+### 1.B.1. For each key press, define the relative timepoint within the R-R interval, the R-R interval length, and the respective heart rate 
 
 * What's the time of the Rpeak just before each key press (click1onset)?
-```{r add var log_encode Rtend}
+```{r define relative click onset}
 #--------------------------------------------------------------------------
-#define variables for loop (if main_exg2_peaks_s, meain_exg2_dtp are not yet created) -> otherwise already loaded (see above)
+##define variables for loop (if main_exg2_peaks_s is not yet created) -> otherwise already loaded (see above)
+
 # main_exg2_peaks_s <- NULL # create list to contain Rpeaks for each participant (vp)
 # main_exg2_peaks_s_list <- NULL
-main_exg2_dtp <- list() # create list to contain single ecg leads for each vp
-print(getwd())
-print(path_data)
+
 #--------------------------------------------------------------------------
 ## 1. define relative timepoint, R-R interval, and heart rate for each click
 for (part in inc_list[1:length(inc_list)]) {  # loop over participants
@@ -264,10 +254,7 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
   print(paste('Processing subject', num2str(grep(part, inc_list), fmt=0), 'of',
                num2str(length(inc_list),fmt=0)))
   
-  ## a) create main_exg_2 lists (if not created)
-  # # Read single lead with dtp for each vp
-  main_exg2_dtp[[part]] <- read.table(paste(path_data, part, '/', part, '_main_exg2.txt', sep = ''))
-  # 
+  ## a) create main_exg_2_peaks list (if not created)
   # # Read time points from R peaks Kubios output
   # main_exg2_peaks_tmp <- NULL
   # main_exg2_peaks_tmp <- readMat(paste(path_data, part, '/', part, '_main_exg2_hrv.mat', sep = '')) # read Kubios matlab output into R
@@ -306,43 +293,42 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
 #--------------------------------------------------------------------------
 #save list with Rpeaks from Kubios output: 
 #save(main_exg2_peaks_s_list, file = paste(path_dataframes,"main_exg2_peaks_s_list.RData", sep=''))
-
-#save list with complete ecg leads for each vp:
-#save(main_exg2_dtp, file = paste(path_dataframes,"main_exg2_dtp.RData", sep=""))
 #--------------------------------------------------------------------------
 ```
 
 
-### 1.B.2. Define circular onset and cardiac phase of each key press
+### 1.B.2. For each key press, define the circular onset and cardiac phase
 
 Analyse key press relative to the heartbeat (1. circular and 2. binary analysis)
 
-  1. Circular
+  1. **Circular**
   
   * Compute relative phase of click1onset within R-R interval, assigning values btw. 0 and 2pi (log_encode$radclick)
   
-  2. Binary
+  2. **Binary**
   
-  * In which cardiac phase do clicks fall - in systole (ejection-phase: sys1, sys2), diastole   (dias1, dias2, dias3, dias4), or non-defined (pre-ejection period, security window between systole and diastole)?
+  * In which cardiac phase do clicks fall? - in systole (ejection-phase: sys1, sys2), diastole   (dias1, dias2, dias3, dias4), or non-defined (pre-ejection period, security window between systole and diastole)?
 
 
-For binary analysis: Cardiac cycle is segmented into several intervals:
-* qonR: interval from qwave onset until Rpeak (=qonR_s)
-* crop: interval from Rpeak to end of pep (pep = qonR_s + crop)
-* Rtend: Interval from Rpeak to twave end (here, end of systole)
-* syspat: Rtend minus crop: ejection period until twave end (without pre-ejection) = lvet
-* sys1: first half of ejection period (length: 0.5 * syspat)
-* sys2: second half of ejection period (length: 0.5 * syspat)
+To prepare binary analysis: Cardiac cycle is segmented into several intervals:
 
-* pep: pre-ejection period (starting from q wave)
-* lvet: ventricular ejection time (qs2 - pep) = syspat
+* **pep**: pre-ejection period (starting from q wave), determined with regression equation (s. above)
+* **qonR**: interval from qwave onset until Rpeak (created in `templates_t_q`)
+* **crop**: interval from Rpeak to end of pep (pep = qonR + crop)
 
-* diaspat: remaining diastole (R-R - syspat - qs2)
+* **Rtend**: Interval from Rpeak to twave end, defines end of systole (created in `templates_t_q`)
+
+* **syspat**: Rtend minus crop: ejection period until twave end (without pre-ejection) = lvet (left-ventricular ejection period)
+* **sys1**: first half of ejection period (length: 0.5 * syspat)
+* **sys2**: second half of ejection period (length: 0.5 * syspat)
+
+* **diaspat**: remaining diastole (R-R - syspat - qs2)
 * dias1 to dias4: diastolic bins of same length (lenght: 0.25 * diaspat)
 
-Two cardiac phases are defined as systole, diastole:
-* 2 intervals in systole:  sys1, sys2 (ejection until twave end)
-* 4 intervals in diastole: dias1, dias2, dias3, dias4
+Define the two cardiac phases systole, diastole:
+
+* **Systole**: sys1 + sys2 (ejection until twave end)
+* **Diastole**: dias1 + dias2 + dias3 + dias4
 * non-defined cardiac intervals: pep (pre-ejection), 50ms window between systole and diastole
 
 ```{r add var log_encode Rtend}
@@ -351,6 +337,10 @@ Two cardiac phases are defined as systole, diastole:
 
 for (part in inc_list[1:length(inc_list)]) {  # loop over participants
 
+    cat('\014')
+  print(paste('Processing subject', num2str(grep(part, inc_list), fmt=0), 'of',
+               num2str(length(inc_list),fmt=0)))
+  
   run = min(which(log_encode$vp == part)) - 1 # create run variable to loop over respective rows for each vp
   for (iclick in (run+1):(run+length(log_encode$click1onset_ecgtime_s[log_encode$vp == part]))) {   # loop over 120 clicks for each vp
   
@@ -364,16 +354,18 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
     #--------------------------------------------------------------------------
     # 2. BINARY: check in which cardiac intervals clicks fall
     
-    # a) define systolic time intervals (STI)
-    x <-  mean(log_encode$HR_1perMin[log_encode$vp == part])  # mean heart rate 
-    sitvec <- callsti(x, log_encode, iclick) # vector with systolic intervals (calculated from qwave)
+    # a) define cardiac intervals
+    
+    # pre-ejection period
+    x <-  mean(log_encode$HR_1perMin[log_encode$vp == part])  # compute participant's mean heart rate during encoding
+    sitvec <- callsti(x, log_encode, iclick) # vector with pre-ejection period (calculated from qwave)
     
     log_encode$pep[iclick] <- sitvec["pep"] # pre-ejection period 
-    log_encode$qonR[iclick] <- qonR_s[part] # difference from qonset to R
-    
-    # transfer STI to intervals that start from Rpeak (not qwave) -> substract distance qonR
-    log_encode$crop[iclick] <- sitvec["pep"] - qonR_s[part] # crop: pre-ejection period from Rpeak, substract q
+    log_encode$qonR[iclick] <- qonR_s[part] # difference from qonset to R 
+    log_encode$crop[iclick] <- sitvec["pep"] - qonR_s[part] # crop: remaining part of pre-ejection, after cropping out qonR
     log_encode$Rtend_s[iclick] <- sys_dur_s[part] #interval from R to tend
+    
+    # ejection-period
     log_encode$syspat[iclick] <- log_encode$Rtend_s[iclick] - log_encode$crop[iclick] # systolic ejection-period 
     
     # add 50ms security window (x) between systole end and start of diastole
@@ -425,7 +417,7 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
 
 ### 1.B.3. Define cardiac phases of hits, misses
 
-* Analysis recognition (hit, miss), relative to phase of stimulus onset in encoding 
+* Analysis of recognition performance (hit, miss), relative to phase of stimulus onset in encoding 
 ```{r add recognition parameters to log_encode}
 
 # create new columns to check det = HIT, MISS relative to CLICK: sys vs. dias, dias_bin
@@ -474,7 +466,7 @@ log_encode <- left_join(log_encode, subset(kubios_main, select = c(mhr_main,vp))
 
 ### 1.C.2. Add ratings 
 
-* Add individual and normative ratings for each picture to log_encode
+* Add individual and normative ratings for each picture to `log_encode`
 ```{r add ratings to log_encode}
 #--------------------------------------------------------------------------
 # subset individual ratings from log_rate -> join with log_encode
@@ -494,9 +486,10 @@ log_encode <- left_join(log_encode, emopics_norms[1:3], by = c('stimnum'))
 
 # 2. PREPARE SHORT DATA FRAME: DATA_BINS
 
-## 2.A. Create data_bins (all valences)
+## 2.A. Create data_bins
+
 * Create short df with one row per pearticipant
-* melted -> casted log_encode: one row per vp
+* melted -> casted `log_encode` to generate one row per vp
 ```{r create df data_bins}
 #--------------------------------------------------------------------------
 # create data_bins -> cast means
@@ -511,7 +504,7 @@ data_bins <- left_join(data_bins, c1, by = c("vp"))
 
 #--------------------------------------------------------------------------
 # sum of detection parameters (hits, misses, fa, cr) in each cardiac interval
-m2 <- melt(log_encode, id = c("vp", "valence"), measure = c("hit_pep", "hit_sys1", "hit_sys2", "miss_pep", "miss_sys1", "miss_sys2", "hit_dias1", "hit_dias2", "hit_dias3", "hit_dias4", "miss_dias1", "miss_dias2", "miss_dias3", "miss_dias4")) # long df of 0,1
+m2 <- melt(log_encode, id = c("vp", "valence"), measure = c("hit_pep", "hit_sys1", "hit_sys2", "hit_x", "hit_dias1", "hit_dias2", "hit_dias3", "hit_dias4", "miss_pep", "miss_sys1", "miss_sys2", "miss_x", "miss_dias1", "miss_dias2", "miss_dias3", "miss_dias4"), na.rm = T) # long df of 0,1
 c2 <- cast(m2, formula = vp ~ variable, sum) # cast -> calculate sum
 data_bins <- left_join(data_bins, c2, by = c("vp"))
 
@@ -528,6 +521,7 @@ data_bins$prop_alldias_RR <- data_bins$alldias / data_bins$R_R_s
 data_bins$click_allsys <-  data_bins$click_pep + data_bins$click_sys1 + data_bins$click_sys2 # clicks allsys 
 data_bins$click_lvet <- data_bins$click_sys1 + data_bins$click_sys2 # clicks lvet 
 data_bins$click_alldias <- data_bins$click_dias1 + data_bins$click_dias2 + data_bins$click_dias3 + data_bins$click_dias4 # clicks dias
+#--------------------------------------------------------------------------
 ```
 
 
