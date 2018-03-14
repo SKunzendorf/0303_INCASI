@@ -90,6 +90,10 @@ matinfo <- NULL
 
 for (part in inc_list[1:length(inc_list)]) {  # loop over inc_list (over each participant)
 
+ cat('\014')
+  print(paste('Processing subject', num2str(grep(part, inc_list), fmt=0), 'of',
+               num2str(length(inc_list),fmt=0)))
+               
     #--------------------------------------------------------------------------
     # for each part: import dat.files from inc_list in log_cur
     log_cur <- NULL
