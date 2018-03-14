@@ -5,7 +5,7 @@ date: "03. March 2018"
 output: html_document
 ---
 
-MAIN ANALYSIS:
+**MAIN ANALYSIS**:
 
 **1. ENCODING**
 
@@ -23,9 +23,9 @@ MAIN ANALYSIS:
 
 **SUPPLEMENTARY ANALYSIS**
 
-1. Correlation of recognition memory with covariates
+1.Correlation of recognition memory with covariates
 
-2. Analyse individual picture ratings
+2.Analyse individual picture ratings
 
 
 
