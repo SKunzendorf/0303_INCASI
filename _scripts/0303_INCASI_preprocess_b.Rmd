@@ -23,7 +23,7 @@ rm(list=ls())
 #--------------------------------------------------------------------------
 # Define paths:
 path_wd 	 <- getwd()
-path_data <- paste("../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
+path_data <- paste("../../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
 path_scripts  <- paste("../_scripts/",sep="") # path to folder: _scripts
 path_functions  <- paste("../_functions/",sep="") # path to folder: _functions
 path_dataframes <- paste("../_dataframes/",sep="") # path to folder: _dataframes
