@@ -68,8 +68,9 @@ $ https://github.com/SKunzendorf/0303_INCASI.git
 ...||-|`inc04`  
 ...||-|`inc05`  
 ...||-|...
+
 - For the **main analysis** (skipping preprocessing), directly open script `0303_INCASI_analysis.Rmd` (data folder **0303_INCASI_data** not needed)
-- **Caveat**: If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
+- If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
 - The file pathways are then created within the script (setup chunk)
 
 
@@ -80,20 +81,68 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 ## 3.1. Preprocessing
 
-### `0303_INCASI_preprocess_a.Rmd`
 
-* script to load raw behavioural data and prepare ECG data for analysis in Kubios
+### 3.1.1. Compute ECG-templates to prepare extraction of individual systole
+
+### `templates_t_q.Rmd`
 
 *Script outline:*
 
-**1.** Behavioural data (from stimulation) is loaded into dataframe (one row per trial), and split into 3 according to experimental sessions:
+**1. T-TEMPLATE**
+
+* ECG-template from Rpeak until **end of t-wave** is computed for each participant
+* Systole end is defined by t-wave end in individual ECG-templates
+
+**1.A.** Create list of dataframes to prepare averaged ECG template
+
+**1.B.** Create averaged ECG template for each participant and crop out template part that contains t-wave
+
+**1.C.** Compute Trapez area approach: Create function to find end of t-wave in template
+
+**1.D.** Apply trapez_area function to find t-wave end in template
+
+**1.D.** Compare t-template with actual ecg trace (check correlations and check visually)
+
+
+**2. Q-TEMPLATE**
+
+* ECG-template from **q-wave onset** until Rpeak for each participant
+* q-wave onset is needed as start point for the pre-ejection phase (determined by regression equation, see preprocessing_b)
+* The pre-ejection phase is then substracted from the whole interval (q-wave until t-wave end) to determine the systolic ejection period (see preprocessing_b)
+
+**2.A.** Create list of dataframes to prepare averaged ECG template 
+
+**2.B.** Create averaged ECG template for each participant and define interval from q-wave onset until Rpeak
+
+
+**3. OVERALL CHECK OF DEFINED CARDIAC INTERVALS**
+
+* Determined cardiac intervals (from preprocessing_b) are needed for this step
+
+**3.A.** Visual Check of systole template (systolic ejection-phase) in participants ECG templates
+
+**3.B.** Visual Check of cardiac intervals in real ECGlead
+
+
+
+
+### 3.1.2. Prepare dataframes
+
+### `0303_INCASI_preprocess_a.Rmd`
+
+*Script outline:*
+
+**1. LOAD BEHAVIOURAL DATA INTO LOG FILE**
+
+Behavioural data (from stimulation) is loaded into dataframe (one row per trial), and split into 3 dataframes according to experimental sessions:
 
 * `log_encode` : encoding period
 * `log_recall` : recognition period
 * `log_rate` : rating period
 
-**2.** ECG data is imported from EEGlab and prepared for subsequent Rpeak detection in Kubios
+**2. DEFINE DETECTION VARIABLES (for analysis recognition phase)**
 
+**3. ANALYSE MEMORY PERFORMANCE (recognition phase)**
 
 
 ### `0303_INCASI_preprocess_b.Rmd`
@@ -103,22 +152,23 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 **1. PREPARE LONG DATAFRAME: `LOG_ENCODE`**
 * Long df with one row per trial
 
-**1.A.** Regression equations (*Weissler,1968*) are computed to determine Systolic time intervals
+**1.A.** Compute regression equation (*Weissler,1968*) to determine pre-ejection period
 
 
-**1.B.** Time points of behavioural responses are analysed relative to the heartbeat
+**1.B.** Analysis of behavior relative to the heartbeat
 
 
-**1.B.1.** Define the relative timepoint within R-R interval, length of R-R interval, and heart rate for each key press
+**1.B.1.** For each key press, define the relative timepoint within the R-R interval, the R-R interval length, and the respective heart rate 
+
 * The relative phase of each key press (i.e. picture onset) is computed within the cardiac cycle, indicated in the ECG as the interval between the previous and the following R peak 
 
-**1.B.2.** Define the circular onset and cardiac phase of each key press (cf. Manuscript *Figure 2b*)
+**1.B.2.** For each key press, define the circular onset and cardiac phase (cf. Manuscript *Figure 2b*)
 
-* **Circular analysis**: to exploit the oscillatory (repeating cycle of cardiac events) character of the heartbeat
+1. **Circular analysis**: to exploit the oscillatory (repeating cycle of cardiac events) character of the heartbeat
 
   - According to its relative timing within this R-R interval, radian values between 0 and 2π are assigned to each stimulus (*Ohl et al., 2016; Pikovsky, Rosenblum, & Kurths, 2003; Schäfer, Rosenblum, Kurths, & Abel, 1998*). 
 
-* **Binary analysis**: to exploit the phasic (two distinct cardiac phases: systole and diastole) character of the heartbeat
+2. **Binary analysis**: to exploit the phasic (two distinct cardiac phases: systole and diastole) character of the heartbeat
 
   - To account for inter-individual differences in cardiac phase lengths, participant-specific phases are computed based on the ECG (for detailed description of the binning procedure cf. Manuscript *Supplementary Methods*)
   - Picture onsets are binned into either individual systole, diastole, or non-defined cardiac phases (pre-ejection period, 50ms security window between end of stystole and start of diastole)
@@ -134,7 +184,7 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 * Short df with one row per participant
 
 
-## 3.2. Circular functions
+### 3.1.2. Circular functions
 
 Functions to compute within-subject (1. level) and group-level (2. level) circular analysis.
 
@@ -182,6 +232,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 **Function variables** (see also above)
 * **det**: "hit_miss" = default mode: compute hits and misses (= all old pictures)
   - specify: det = "HIT", det = "MISS"
+
 
 
 
@@ -238,15 +289,17 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 #### SUPPLEMENTARY ANALYSIS
 
-**1. Supplementary models for recognition memory: Add inter-individual variables**
+**1. Correlation of recognition memory with covariates**
 
-* add variables to **m1**:
-* recognition memory ~ valence * cardiac phase + additional variable
+**1.A.** Prepare dataframe and include additional variables (inter-individual differences)
 
-  - **m2**: + Heart rate variability (rmssdl: log-transformed to mitigate skewedness and centred to the mean) 
-  - **m3**: + Trait Anxiety (staiz: z-transformed)
-  - **m4**: + Interoceptive Awareness (IAz: z-transformed)
+* **Heart rate variability** (rmssdl: log-transformed to mitigate skewedness and centred to the mean) 
+* **Trait Anxiety** (staiz: z-transformed)
+* **Interoceptive Awareness** (IAz: z-transformed)
 
+**1.B.** Run correlations mean recognition performance ~ covariate
+
+**1.C.** Plot correlations (c.f. Manuscript *Supplementary Figure 1*)
 
 **2. Analyse ratings: Subjective perception of picture emotionality (normative vs. individual ratings)**
 
@@ -257,19 +310,25 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 * Run ANOVA to test ratings across rating category (normative, individual) and valence
 * Run one-sided ttests for normative vs. individual ratings across each valence level
 
-**2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Supplementary Figure 1*)
+**2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Supplementary Figure 2*)
 
 
 
 #### REFERENCES
 
-Delorme, A., & Makeig, S. (2004). EEGLAB: an open sorce toolbox for analysis of single trail EEG dynamics including independent 
-component analysis. *Journal of Neuroscience Methods, 134*, 9–21. *[URL](https://sccn.ucsd.edu/eeglab/download/eeglab_jnm03.pdf)*.
+Delorme, A., & Makeig, S. (2004). EEGLAB: an open sorce toolbox for analysis of single trail EEG dynamics including independent component analysis. *Journal of Neuroscience Methods, 134*, 9–21. *[URL] (https://sccn.ucsd.edu/eeglab/download/eeglab_jnm03.pdf)*.
 
-R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, 
-Austria. *[URL](https://www.R-project.org/)*.
+Ohl, S., Wohltat, C., Kliegl, R., Pollatos, O., & Engbert, R. (2016). Microsaccades Are Coupled to Heartbeat. *Journal of Neuroscience, 36(4)*, 1237–1241.*[URL] (https://doi.org/10.1523/JNEUROSCI.2211-15.2016)*
 
-RStudio Team (2016). RStudio: Integrated Development for R. RStudio, Inc., Boston, MA. *[URL](http://www.rstudio.com/)*.
+Pikovsky, A., Rosenblum, M., & Kurths, J. (2003). Synchronization: A Universal Concept in Nonlinear Sciences. *Cambridge Nonlinear Science Series 12*, 432. *[URL] (https://doi.org/10.1063/1.1554136)*
+
+R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. *[URL] (https://www.R-project.org/)*.
+
+RStudio Team (2016). RStudio: Integrated Development for R. RStudio, Inc., Boston, MA. *[URL] (http://www.rstudio.com/)*.
+
+Schäfer, G., Rosenblum, M. G., Kurths, J., & Abel, H. H. (1998, March 19). Heartbeat synchronized with ventilation. *Nature. Nature Publishing Group*. *[URL] (https://doi.org/10.1038/32567)*
 
 Tarvainen M. P., Niskanen J. P., Lipponen J. A., Ranta-Aho P. O., Karjalainen P. A. (2014). Kubios HRV – heart rate variability 
-analysis software. *Comput. Methods Programs Biomed., 113*, 210–220. *[URL](https://www.sciencedirect.com/science/article/pii/S0169260713002599?via%3Dihub)*.
+analysis software. *Comput. Methods Programs Biomed., 113*, 210–220. *[URL] (https://www.sciencedirect.com/science/article/pii/S0169260713002599?via%3Dihub)*.
+
+Weissler, A. M., Harris, W. S., & Schoenfield, C. D. (1968). Systolic Time Intervals in Heart Failure in Man. *Circulation, 37(2)*, 149–159. Retrieved from *[URL] (http://circ.ahajournals.org/cgi/content/abstract/37/2/149)*
