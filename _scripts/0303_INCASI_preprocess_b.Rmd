@@ -211,6 +211,8 @@ data_var <- join_all(list(split_IA, split_stai, split_rmssd), by = c("vp")) # df
 * Regression equations relate interval length to the mean HR
 * Most widely applied those by Weissler, Harris and Schoenfeld (1968):  recorded in normal subjects with wide range of resting HR
 
+* PEP is then substracted from the whole systolic interval (q-wave onset until t-wave end) to extract individual ejection-phases (s. below)
+
 ```{r function callsti}
 # create function to calculate pre-ejection period based on Weissler regression equations (1968)
 
