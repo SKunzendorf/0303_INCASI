@@ -33,6 +33,10 @@ circ_click_mem <- function(x, det = "hit_miss", val = "all_val", ray1 = F, plot1
     segments(0,0,xcoord, ycoord, col = col, lty= lty, lwd = 3)
   }
   
+  # specify detection and valence
+  idx <- which(is.na(log_encode$answer)==FALSE) # select only rows where answer is not NA (NA for new pictures)
+  d <- log_encode[idx,] 
+  
   # define variables for loop
   zerorad <- NULL
   ray.p <- numeric()
@@ -49,19 +53,15 @@ circ_click_mem <- function(x, det = "hit_miss", val = "all_val", ray1 = F, plot1
   for(part in x[1:length(x)]) {     
     
     
-    # specify detection and valence
-    idx <- which(is.na(log_encode$answer)==FALSE) # select only rows where answer is not NA (NA for new pictures)
-    d <- log_encode[idx,] 
-    
-    if (det == "hit_miss" & val == "all_val") {  # loop over all old pics: all det (hit, miss) & all valences
+    if (det == "hit_miss" & val == "all_val") {  # loop over all memory probes (old pics): all det (hit, miss) & all valences
       vec <- (d$radclick[(d$vp == part)]) # take whole column
       H_rad[[part]] <- circular(vec, type = "angles", units="radians", modulo="2pi", rotation="clock", zero=pi/2)  
       
-    } else if (det == "hit_miss" & val != "all_val") {  # no specified det, but specified valence
+    } else if (det == "hit_miss" & val != "all_val") {  # all memory probes for specified valence
       vec <- (d$radclick[(d$vp == part) & (d$valence == val)]) # whole columns
       H_rad[[part]] <- circular(vec, type = "angles", units="radians", modulo="2pi", rotation="clock", zero=pi/2)  
       
-    } else if (det != "hit_miss" & val == "all_val") { # specified det, but no specified valence
+    } else if (det != "hit_miss" & val == "all_val") { # specified detection (hit, miss), but no specified valence
       vec <- (d$radclick[(d$vp == part) & (d$det == det)]) # whole columns
       H_rad[[part]] <- circular(vec, type = "angles", units="radians", modulo="2pi", rotation="clock", zero=pi/2) 
       
@@ -123,8 +123,8 @@ circ_click_mem <- function(x, det = "hit_miss", val = "all_val", ray1 = F, plot1
   
   #print circular mean1
   if (ray1 == T) {
-    rayvec1 <- data.frame(ray.p, ray.stat)
-    colnames(rayvec1) <- c("rayleigh test statistics", "p-value")
+    rayvec1 <- data.frame(x, ray.stat, ray.p)
+    colnames(rayvec1) <- c("vp", "rayleigh statistics", "pvalue")
     return(rayvec1)
   }
   
@@ -137,8 +137,8 @@ circ_click_mem <- function(x, det = "hit_miss", val = "all_val", ray1 = F, plot1
   
   #print circular mean1
   if (mean1 == T) {
-    meanvec1 <- data.frame(mean_click_rad, mean_length)
-    colnames(meanvec1) <- c("individual mean (rad)", "mean length ϱ")
+    meanvec1 <- data.frame(x, mean_click_rad, mean_length)
+    colnames(meanvec1) <- c("vp", "individual mean (rad)", "mean length ϱ")
     return(meanvec1)
   }
   
