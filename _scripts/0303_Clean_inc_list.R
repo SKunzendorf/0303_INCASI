@@ -31,9 +31,8 @@
 tests_mem <- map_df(inc_clean, circ_click_mem, ray1 = T) # store dataframe with testresults in ray1
 
 # with sign mem probes: subjects whose distribution of mem probes significantly differs from normal distribution
-inc_sign_mem_ray <- inc_clean[c(which(tests_mem$ray.p < 0.05))] # vps who differ sign. in distribution of mem probes - ray
+inc_sign_mem_ray <- inc_clean[c(which(tests_mem$pvalue < 0.05))] # vps who differ sign. in distribution of mem probes - ray
 
 # create inc_clean without sign mem probes: all val
 inc_clean_cutSignmem_ray <- inc_clean[!inc_clean %in% inc_sign_mem_ray] # substract sign mem probes ray from inc_clean_recall
-
 #----------------------------------------------------------------------------
