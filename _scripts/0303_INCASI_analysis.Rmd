@@ -42,7 +42,7 @@ rm(list=ls())
 #--------------------------------------------------------------------------
 # Have you done your own preprocessing? 
 # If so, change this parameter:
-use_own_preproc_data <- FALSE
+use_own_preproc_data <- F
 
 #--------------------------------------------------------------------------
 # Set working directory to containing folder ('0303_INCASI'):
@@ -236,7 +236,7 @@ You can consider to decrease the number of bootstrap repetitions to for example 
 # bootstrap main analysis
 
 
-nBoot  <- 10000 # number of bootstrap procedures: default = 10000, switch to 100 if necessary
+nBoot  <- 100 # number of bootstrap procedures: default = 10000, switch to 100 if necessary
 vplist <- unique(log_encode$vp) # list of participants
 
 # set up output variables
@@ -441,7 +441,9 @@ cohen.d(data_bins_enc$click_lvet_rel, data_bins_enc$click_alldias_rel, paired = 
 #### 1.B.3. Plot results with ggplot
 
 a) Prepare dataframes: melt and cast dataframes
+
 * phase (lvet, dias = variable) ~ respective ratios (= value)
+* get overall mean, and standard deviation of systolic and diastolic ratios
 ```{r enc  prep dataframes}
 #--------------------------------------------------------------------------
 # prepare long df m_lvetclick (relative clickrates for ejection-phase vs whole diastole)
@@ -733,24 +735,6 @@ idx1 <- which(is.na(d$IA)==FALSE)
 d1 <- d[idx1,]
 d1$IAz <- (d1$IA - mean(d1$IA))/sd(d1$IA)
 
-# #assign each participant a number
-# # d
-# vplist <- unique(d$vp)
-# d$vpnum <- 0
-# for(i in 1:length(vplist)){
-#   idx <- which(d$vp==vplist[i])
-#   d$vpnum[idx] <- i
-# }
-# d$vpnum <- as.factor(d$vpnum)
-# 
-# # d1: adapt for IA
-# vplist1 <- unique(d1$vp)
-# d1$vpnum <- 0
-# for(i in 1:length(vplist1)){
-#   idx <- which(d1$vp==vplist1[i])
-#   d1$vpnum[idx] <- i
-# }
-# d1$vpnum <- as.factor(d1$vpnum)
 #--------------------------------------------------------------------------
 ```
 
@@ -869,18 +853,22 @@ triple_cor
 * see also **Supplementary Table 1**:
 ```{r stimnum ratings}
 #----------------------------------------------------------------------------
-# 1. AROUSAL: melt arousal ratings - melt rate_va
+## 1. AROUSAL: melt arousal ratings - melt rate_va
 m_rate_a <- melt(rate_va, id = c("stimnum", "valence"), measure = c("rate_arousal", "norms_arousal"))
 
 # cast m_rate_a: valence (rows) ~ mean individual rating (cols)
 c_rate_a <- cast(m_rate_a, valence ~ variable, c(mean, sd, length, se)) #   mean, sd, length, se for each valence
+
+# mean individual and normative ratings
 c_rat_a_all <- cast(m_rate_a, . ~ variable, c(mean, sd, length, se)) # over all valences
 
-# 2. VALENCE: melt valence ratings - melt rate_v
+## 2. VALENCE: melt valence ratings - melt rate_v
 m_rate_v <- melt(rate_va, id = c("stimnum", "valence"), measure = c("rate_valence", "norms_valence"))
 
 # cast m_rate_v: valence (rows) ~ mean individual rating (cols)
 c_rate_v <- cast(m_rate_v, valence ~ variable, c(mean, sd, length, se)) # mean, sd, length, se for each valence
+
+# mean individual and normative ratings
 c_rat_v_all <- cast(m_rate_v, . ~ variable, c(mean, sd, length, se)) # over all valences
 #----------------------------------------------------------------------------
 ```
