@@ -1,5 +1,5 @@
 # Define mytheme
-fontsize = 11
+fontsize = 12
 
 mytheme <-  theme_bw() + theme(legend.position="none") +
 	
