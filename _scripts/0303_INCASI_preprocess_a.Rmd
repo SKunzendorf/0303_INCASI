@@ -15,19 +15,21 @@ output: html_document
 rm(list=ls())
 
 #--------------------------------------------------------------------------
-# Set working directory
-getwd()
-setwd("/Volumes/StellaDisk/INCASI_desktop/01_Analysis/0303_INCASI") # Stella's laptop
+# Set working directory to containing folder ('0303_INCASI'):
+
+# knitr automatically sets this to the folder that contains the script 
+# (here 0303_INCASI/_scripts)
 
 #--------------------------------------------------------------------------
-# Define paths
+# Define paths:
 path_wd 	 <- getwd()
-path_data <- paste(path_wd,"/_data/",sep="") 
-path_scripts  <- paste(path_wd,"/_scripts/",sep="")
-path_functions  <- paste(path_wd,"/_functions/",sep="") 
-path_dataframes <- paste(path_wd,"/_dataframes/",sep="") 
-path_variables <- paste(path_wd,"/_variables/",sep="")
-path_figures <- paste(path_wd,"/_figures/",sep="") 
+path_data <- paste("../../0303_INCASI_data/",sep="") # path to folder: 0303_INCASI_data
+path_scripts  <- paste("../_scripts/",sep="") # path to folder: _scripts
+path_functions  <- paste("../_functions/",sep="") # path to folder: _functions
+path_dataframes <- paste("../_dataframes/",sep="") # path to folder: _dataframes
+path_variables <- paste("../_variables/",sep="") # path to folder: _variables
+path_figures <- paste("../_figures/",sep="") # path to folder: _figures
+
 
 #--------------------------------------------------------------------------
 # load packages
@@ -50,27 +52,31 @@ ecg_sf <-  2048 # --> 1 datapoint every 0.4882812 ms (1000/2048)
 ```
 
 
-## 1. BEHAVIOURAL DATA
+## BEHAVIORAL DATA
 
-### 1.1. LOAD BEHAVIOURAL DATA IN LOG FILE
+### 1. LOAD BEHAVIORAL DATA IN LOG FILE
 
-* Load behavioural data (from stimulation) and create log dataframe (with 3 subsets for each experimental period: `log_encode`, `log_recall`, `log_rate`)
+* Load behavioral data (from stimulation) and create log dataframe (with 3 subsets for each experimental period: `log_encode`, `log_recall`, `log_rate`)
 
-define column names:
-* block: which experimental period: 1=encoding, 2=recognition, 3=rating
-* trialnum: index of trial (1-120) per participant
-* stimnum: EmoPic number of picture
-* real_newold: 1 = new picture, 2 = old picture (recognition phase)
-* valence: neutral, positiv, negativ
-* dummy1: dummy row
-* fixonset: timepoint of fixation cross onset
-* piconset: timepoint of picture onset
-* picoffset: timepoint of picture offset
-* click1onset: timepoint of key press (= click) to prompt next picture
-* click2onset: timepoint of second rating answer (valence) in rating period
-* recallonset. timepoint of recognition answer
-* rate_arousal: timepoint of first rating answer (arousal) in rating period
-* vp: participant ID (inc04 - inc50)
+Define column names:
+
+* **block**: which experimental period: 1=encoding, 2=recognition, 3=rating
+* **trialnum**: index of trial (1-120) per participant
+* **stimnum**: EmoPic number of picture
+* **real_newold**: 1 = new picture, 2 = old picture (recognition phase)
+* **valence**: neutral, positiv, negativ
+* **dummy1**: dummy row
+* **fixonset**: timepoint of fixation cross onset
+* **piconset**: timepoint of picture onset
+* **picoffset**: timepoint of picture offset 
+* **click1onset**: timepoint of key press (= click) to prompt next picture (in log_encode)
+* **click2onset**: timepoint of second rating answer (valence) (in log_recall)
+* **recallonset**: timepoint of recognition answer (in log_recall)
+* **dummy3**: dummy row
+* **dummy4**: dummy row
+* **answerX**: becomes 'answ_newold' (in log_recall), and 'rate_valence' (in log_rate), no meaning in log_encode
+* **rate_arousal**: timepoint of first rating answer (arousal) in rating period
+* **vp**: participant ID (inc04 - inc50)
 
 ```{r load BEHAV}
 #--------------------------------------------------------------------------
@@ -84,10 +90,14 @@ matinfo <- NULL
 
 for (part in inc_list[1:length(inc_list)]) {  # loop over inc_list (over each participant)
 
+ cat('\014')
+  print(paste('Processing subject', num2str(grep(part, inc_list), fmt=0), 'of',
+               num2str(length(inc_list),fmt=0)))
+               
     #--------------------------------------------------------------------------
     # for each part: import dat.files from inc_list in log_cur
     log_cur <- NULL
-    log_cur <- read.csv(file = paste(path_data, part, '/raw/behav/inc1', part, '.dat', sep=""), header=FALSE, sep = '\t') # read dat files into log_cur
+    log_cur <- read.csv(file = paste(path_data, part, '/inc1', part, '.dat', sep=""), header=FALSE, sep = '\t') # read dat files into log_cur
     log_cur$vp <- part  # create new column vp
     colnames(log_cur) <- c ('block', 'trialnum', 'stimnum', 'real_newold', 'valence', 'dummy1', 'fixonset', 'piconset', 'picoffset', 'click1onset', 'click2onset', 'recallonset', 'dummy3', 'dummy4', 'answerX','rate_arousal','vp')
 
@@ -100,14 +110,14 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over inc_list (over each pa
     #--------------------------------------------------------------------------
     # read markers of stimulation (using R.matlab package)
     matinfo_cur <- NULL
-    matinfo_cur <- readMat(con = paste(path_data, part, '/raw/behav/inc1', part, '.mat', sep="")) # read mat files in matinfo_cur
+    matinfo_cur <- readMat(con = paste(path_data, part, '/inc1', part, '.mat', sep="")) # read mat files in matinfo_cur
     matinfo[[part]] <- matinfo_cur
 
     # check length between markers
     logonset_s <- as.numeric(matinfo_cur$const[6]) # sessionStart in sec (=session start: timeinterval since start matlab, in sec)
     logoffset_s <- as.numeric(matinfo_cur$const[7]) # sessionStop in sec
 
-    log_cur$logduration_s <- logoffset_s - logonset_s  # duration of logfile (= duration of total experimental phase: enc+ rec+ rate)
+    log_cur$logduration_s <- logoffset_s - logonset_s  # duration of logfile (= duration of total experimental phase: encoding + recall + rate)
 
     #--------------------------------------------------------------------------
     # crop time points of log file -> set in relation to ecg_main onset (onset of ecg recording)
@@ -150,16 +160,16 @@ colnames(log_rate)[colnames(log_rate) == 'answerX'] <- 'rate_valence' # particip
 ```
 
 
-### 1.2. DEFINE DETECTION VARIABLES - HIT, MISS, FA, CR (for analysis recognition phase)
+### 2. DEFINE DETECTION VARIABLES - HIT, MISS, FA, CR (for analysis recognition phase)
 
-* define participants' (vp) answers for "new" = 1, "old" = 2
-* create detection variables: HIT, MISS, FA, CR
-* add detection variables to log_recall, log_encode
+* Define participants' (vp) answers for "new" = 1, "old" = 2
+* Create detection variables: HIT, MISS, FA, CR
+* Add detection variables to log_recall, log_encode
 ```{r genVariables}
 #--------------------------------------------------------------------------
 # change answer code (column answ_newold) for "old" from "-1" to "2"
-log_recall$answ_newold[log_recall$answ_newold==-1] <- 2 # select column answ_newold from log_recall, all values of column answ_newold that are "-1" <- overwrite with "2"
-
+# select column answ_newold from log_recall, all values of column answ_newold that are "-1" <- overwrite with "2"
+log_recall$answ_newold[log_recall$answ_newold==-1] <- 2 
 #--------------------------------------------------------------------------
 # create new column answercheck -> to compare vps' answer (new/old) with actual picture status (new/old)
 # check: pictures shown (log_recall$real_newold) == participants' answers (log_recall$answ_newold) (log_recall$answercheck: TRUE, FALSE)
@@ -224,11 +234,11 @@ log_encode <- left_join(log_encode, answer_det, by = c('vp', 'stimnum'))
 ```
 
 
-### 1.3. ANALYSE DETECTION PERFORMANCE (recognition phase)
+### 3. ANALYSE MEMORY PERFORMANCE (recognition phase)
 
-* 1. `perf_all`: calculate answer performance (answer_mean, -length, -sd, -minperf) for each vp
-* 2. `perf_det`: detection performance for each vp, define function `dprime`: d' = Z(Hit) - Z(false alarm) 
-* 3. `perf_val`: detection performance for each vp and valence
+1. `perf_all`: calculate answer performance (answer_mean, -length, -sd, -minperf) for each vp
+2. `perf_det`: detection performance for each vp, define function `dprime`: d' = Z(Hit) - Z(false alarm) 
+3. `perf_val`: detection performance for each vp and valence
 ```{r detectPerform Behav}
 #--------------------------------------------------------------------------
 # 1. perf_all: answer performance vor each vp: create table: vp ~ answer (calculate for variable answer: mean, length, sd, minperf)
@@ -279,58 +289,3 @@ perf_val$dprime <- dprime(perf_val$detection_hit, perf_val$detection_falarm)  # 
 ```
 
 
-## 2. ECG DATA
-
-### 2.1 LOAD ECG
-
-* Import ECG data from EEGlab:
-  * export.csv: dataframe with 1 column per ECGlead (EXG1, EXG2, EXG3)
-  * events.csv: dataframe with markers 
-* Prepare one lead columns for each session (resting, main experiment, heart beat perception task) for subsequent Kubios analysis
-* after this code chunk: open Kubios to detect Rpeaks
-```{r load ECG}
-#--------------------------------------------------------------------------
-# import ecg files (from eeglab)
-
-# inc_export: create loop to import all inc_export, inc_events (markers) from inc_list
-ecg_exp <- NULL #define variable ecg_ecp for loop
-ecg_events <- NULL 
-
-for (part in inc_list[1:length(inc_list)]) { 
-  # read ecg files in ecg_exp
-  ecg_exp <- read.csv(file = paste(path_data, part, '/crop/', part, '_export.csv', sep=""), sep = '\t') 
-  
-  # read ecg files in ecg_events
-  ecg_events<- read.csv(file = paste(path_data, part, '/crop/', part, '_events.csv', sep=""), sep = '\t') 
-
-  #--------------------------------------------------------------------------
-  # create loop for files with 5 events (inc06-inc10: recording stopped too quickly, last event (marker) is missing)
-  if (dim(ecg_events)[1] < 6) {
-    ecg_events [6, 1] <- 6
-    ecg_events [6, 2] <- 152
-    ecg_events [6, 3] <- dim(ecg_exp)[1]
-    ecg_events [6, 4] <- 6
-  }  
-  
-  #--------------------------------------------------------------------------
-  # create subsets of ecg data: rest, main, hbp, based on ecg_events
-  ecg_rest <- ecg_exp[ecg_events[1,3]:ecg_events[2,3], 1:4]
-  ecg_main <- ecg_exp[ecg_events[3,3]:ecg_events[4,3], 1:4]
-  ecg_hbp <- ecg_exp[ecg_events[5,3]:ecg_events[6,3], 1:4]
-  
-  #--------------------------------------------------------------------------
-  # write 1 column tables for the second ECG lead (#EXG2) for Kubios (for resting, main, hbp phase)
-
-  # ecg_rest:
-  write.table(ecg_rest[,3], paste(path_data, part, '/crop/Kubios/', part, '_rest_exg2.txt', sep = ''), row.names = F, col.names = F)
-  
-  # ecg_main:
-  write.table(ecg_main[,3], paste(path_data, part, '/crop/Kubios/', part, '_main_exg2.txt', sep = ''), row.names = F, col.names = F);
-    
-  # ecg_hbp:
-  write.table(ecg_hbp[,3], paste(path_data, part, '/crop/Kubios/', part, '_hbp_exg2.txt', sep = ''), row.names = F, col.names = F);
-
-}
-
-#--------------------------------------------------------------------------
-```

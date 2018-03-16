@@ -37,7 +37,6 @@ circ_click<- function(x, val = "all_val", ray1 = F, plot1 = F, H_rad1 = F, mean1
   mean_length <- vector()
   mean_secondlevel <- vector()
   raytest_secondlevel <- numeric()
-  data_test <- data.frame()
   H_rad <- list()
   circ.dens_rad <- NULL
   circtrans <- numeric ()
@@ -98,8 +97,8 @@ circ_click<- function(x, val = "all_val", ray1 = F, plot1 = F, H_rad1 = F, mean1
   
     # create dataframe with rayleigh test results 1. level
     if (ray1 == T) {
-      rayvec1 <- data.frame(ray.stat, ray.p)
-      colnames(rayvec1) <- c("rayleigh test statistics", "p-value")
+      rayvec1 <- data.frame(x, ray.stat, ray.p)
+      colnames(rayvec1) <- c("vp", "rayleigh statistics", "pvalue")
       return(rayvec1)
     } 
     
@@ -110,8 +109,8 @@ circ_click<- function(x, val = "all_val", ray1 = F, plot1 = F, H_rad1 = F, mean1
     
     #print circular mean1
     if (mean1 == T) {
-      meanvec1 <- data.frame(mean_click_rad, mean_length)
-      colnames(meanvec1) <- c("individual mean (rad)", "mean length ϱ")
+      meanvec1 <- data.frame(x, mean_click_rad, mean_length)
+      colnames(meanvec1) <- c("vp", "individual mean (rad)", "mean length ϱ")
       return(meanvec1)
     }
     
