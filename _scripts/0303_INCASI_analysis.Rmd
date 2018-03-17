@@ -27,6 +27,7 @@ output: html_document
 
 2.Analyse individual picture ratings
 
+3. Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)
 
 
 ### INCASI SETUP
@@ -236,7 +237,7 @@ You can consider to decrease the number of bootstrap repetitions to for example 
 # bootstrap main analysis
 
 
-nBoot  <- 10000 # number of bootstrap procedures: default = 10000, switch to 100 if necessary
+nBoot  <- 100 # number of bootstrap procedures: default = 10000, switch to 100 if necessary
 vplist <- unique(log_encode$vp) # list of participants
 
 # set up output variables
@@ -883,15 +884,15 @@ c_rat_v_all <- cast(m_rate_v, . ~ variable, c(mean, sd, length, se)) # over all 
 ```{r stimnum ratings run tests}
 #----------------------------------------------------------------------------
 ## 1. Run ANOVA:
-# for each valence level: run anova to test for diff. in mean ratings between individual and normative 
+# for each valence level: run anova to test for diff. in mean ratings between individual and normative picture ratings
 
 # 1.1. AROUSAL ratings: rating value ~ valence * rating category (individual vs. norms)
-aov_a <- aov((value) ~ valence * variable, data=m_rate_a) 
+aov_a <- aov((value) ~ valence * variable + Error(stimnum/variable), data=m_rate_a) 
 summary(aov_a)
 
 
 # 1.2. VALENCE ratings
-aov_v <- aov(log(value) ~ valence * variable, data=m_rate_v)
+aov_v <- aov(log(value) ~ valence * variable + Error(stimnum/variable), data=m_rate_v)
 summary(aov_v)
 
 #----------------------------------------------------------------------------
@@ -905,17 +906,17 @@ sub_neu <- rate_va[rate_va$valence == "neutral",]
 
 ## 2.1. AROUSAL
 # a) Neutral pictures
-a_neu <- t.test(sub_neu$norms_arousal,sub_neu$rate_arousal) # **
+a_neu <- t.test(sub_neu$norms_arousal,sub_neu$rate_arousal, paired = T, alternative = "two.sided") # ***
 cohen.d(sub_neu$norms_arousal,sub_neu$rate_arousal)
 cor.test(sub_neu$norms_arousal,sub_neu$rate_arousal) # ***
 
 # b) Positive pictures
-a_pos <- t.test(sub_pos$norms_arousal,sub_pos$rate_arousal) # ***
+a_pos <- t.test(sub_pos$norms_arousal,sub_pos$rate_arousal, paired = T, alternative = "two.sided") # ***
 cohen.d(sub_pos$norms_arousal,sub_pos$rate_arousal)
 cor.test(sub_pos$norms_arousal,sub_pos$rate_arousal) # ***
 
 # c) Negative pictures
-a_neg <- t.test(sub_neg$norms_arousal,sub_neg$rate_arousal) # *
+a_neg <- t.test(sub_neg$norms_arousal,sub_neg$rate_arousal, paired = T, alternative = "two.sided") # ***
 cohen.d(sub_neg$norms_arousal,sub_neg$rate_arousal)
 cor.test(sub_neg$norms_arousal,sub_neg$rate_arousal) # ***
 
@@ -924,34 +925,13 @@ p_aro <- c(a_neu$p.value, a_pos$p.value, a_neg$p.value)
 p.adjust(p_aro, method = "bonferroni")
 
 #----------------------------------------------------------------------------
-## 2.2. VALENCE
-# a) Neutral pictures
-v_neu <- t.test(sub_neu$norms_valence,sub_neu$rate_valence) # n.s.
-cohen.d(sub_neu$norms_valence,sub_neu$rate_valence)
-cor.test(sub_neu$norms_valence,sub_neu$rate_valence) # ***
-
-# b) Positive pictures
-v_pos <- t.test(sub_pos$norms_valence,sub_pos$rate_valence) # ***
-cohen.d(sub_pos$norms_valence,sub_pos$rate_valence)
-cor.test(sub_pos$norms_valence,sub_pos$rate_valence) # ***
-
-# c) Negative pictures
-v_neg <- t.test(sub_neg$norms_valence,sub_neg$rate_valence) # n.s.
-cohen.d(sub_neg$norms_valence,sub_neg$rate_valence)
-cor.test(sub_neg$norms_valence,sub_neg$rate_valence) # ***
-
-# adjust p-values
-p_val <- c(v_neu$p.value, v_pos$p.value, v_neg$p.value)
-p.adjust(p_val, method = "bonferroni")
-
-#----------------------------------------------------------------------------
 ## 3. compute difference in norms arousal ratings: btw. negative and positive pictures (described in methods)
 # norms ratings
-t.test(sub_neg$norms_arousal,sub_pos$norms_arousal) # n.s. difference btw norms arousal (neg vs pos)
+t.test(sub_neg$norms_arousal,sub_pos$norms_arousal, alternative = "two.sided") # n.s. difference btw norms arousal (neg vs pos)
 cohen.d(sub_neg$norms_arousal,sub_pos$norms_arousal)
 
 # individual ratings
-t.test(sub_neg$rate_arousal,sub_pos$rate_arousal) # *** diff. btw. rated arousal (neg vs pos)
+t.test(sub_neg$rate_arousal,sub_pos$rate_arousal, alternative = "two.sided") # *** diff. btw. rated arousal (neg vs pos)
 cohen.d(sub_neg$rate_arousal,sub_pos$rate_arousal)
 #----------------------------------------------------------------------------
 ```
@@ -1010,3 +990,68 @@ cor_aro
 #----------------------------------------------------------------------------
 ```
 
+
+## 3. Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)
+
+* plot correlations of heart phases
+```{r correlations cardiac parameters}
+#--------------------------------------------------------------------------
+# adapt participants to heart analysis -> include participants with high heart rate
+data_bins_car <- data_bins[data_bins$vp %in% inc_cuthtn,] # include tachycardic participants (but not HTN)
+
+#--------------------------------------------------------------------------
+### summaries of cardiac intervals:
+summary(data_bins_car$HR_1perMin) # mean heart-rate in bpm
+sd(data_bins_car$HR_1perMin)
+
+summary(data_bins_car$R_R_s) # R-R interval
+sd(data_bins_car$R_R_s)
+
+summary(data_bins_car$syspat) # ejection period (EP)
+sd(data_bins_car$syspat)
+
+summary(data_bins_car$allsys) # total systole (QT)
+sd(data_bins_car$allsys)
+
+summary(data_bins_car$prop_syspat_RR) # proportion of EP in R-R interval
+sd(data_bins_car$prop_syspat_RR)
+
+summary(data_bins_car$prop_allsys_RR) # proportion of QT in R-R interval
+sd(data_bins_car$prop_allsys_RR)
+
+#--------------------------------------------------------------------------
+# 1. test correlation mean HR, duration systolic ejection-phase
+cor.test(data_bins_car$HR_1perMin, data_bins_car$syspat) 
+
+# plot correlation between mean HR, systolic ejection-phase
+cor_hrsys <- ggplot(data_bins_car, aes(HR_1perMin, syspat)) + #HR_1perMin, syspat
+  geom_point(size=0.8) + #shape=15
+  geom_smooth(method = "lm", se = T, colour = "black", size=0.2358491) + 
+  mytheme + #mytheme #theme_classic() +
+  labs(y = "Systolic ejection-phase (sec) ", x = "Heart rate (bpm)") 
+cor_hrsys
+
+# ggsave("cor_hrsys.pdf", plot = cor_hrsys, device = "pdf", path = paste(path_figures,"Manuscript", sep=""),
+#   scale = 1, width = 6, height = 6, units = "cm",
+#   dpi = 300, limitsize = T)
+
+#--------------------------------------------------------------------------
+# 2. plot correlation between mean HR, proportion systole (ejection-phase) in total cardiac cycle
+cor.test(data_bins_car$HR_1perMin, data_bins_car$prop_syspat_RR) # test correlation duration RR, proportion of sys/RR
+
+cor_hrpropsys <- ggplot(data_bins_car, aes(HR_1perMin, prop_syspat_RR)) + #prop_syspat_RR
+  geom_point(size=0.8) + #shape=15
+  geom_smooth(method = "lm", se = T, colour = "black", size=0.2358491) + 
+  mytheme + #mytheme #theme_classic() +
+  labs(x = "Heart rate (bpm)", y = "ejection-phase rel. to R-R") 
+cor_hrpropsys
+
+#--------------------------------------------------------------------------
+# plot both scatter plots next to each other
+double_cor <- plot_grid(cor_hrsys, cor_hrpropsys, ncol=2, align = "h", labels = c("a", "b"), label_size = 12)
+
+# ggsave("double_cor.pdf", plot = double_cor, device = "pdf", path = paste(path_figures,"Manuscript", sep=""),
+#   dpi = 300, width = 16, height = 8, units = "cm", limitsize = T) #scale = 1, width = 8.5, height = 5.5, units = "cm",
+
+#--------------------------------------------------------------------------
+```
