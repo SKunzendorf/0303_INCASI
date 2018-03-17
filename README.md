@@ -312,7 +312,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Supplementary Figure 2*)
 
-
+**3.Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)**
 
 ## 4. REFERENCES
 
