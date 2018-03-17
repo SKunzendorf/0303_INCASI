@@ -27,7 +27,7 @@ output: html_document
 
 2.Analyse individual picture ratings
 
-3. Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)
+3.Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)
 
 
 ### INCASI SETUP
@@ -994,6 +994,7 @@ cor_aro
 ## 3. Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)
 
 * plot correlations of heart phases
+* see **Supplementary Figure 3**:
 ```{r correlations cardiac parameters}
 #--------------------------------------------------------------------------
 # adapt participants to heart analysis -> include participants with high heart rate
