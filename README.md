@@ -31,11 +31,11 @@ For a detailed description of the study, have a look at our manuscript on bioRxi
 
 ## 1. Prerequisites
 Programs you need to install prior to the analysis:
-- Our code is computed in the R Statistical Environment (v3.4.3) with **RStudio version 1.0.136** (RStudio Team, 2016)
+- Our code is computed in the R Statistical Environment (v3.4.3) with **RStudio version 1.0.136** (*RStudio Team, 2016*)
 
 Programs used for preprocessing the cardiac data (participants' preprocessed cardiac data available upon request):
-- **EEGlab** (Delorme & Makeig, 2004) was used as signal analysis tool to read bdf files from ECG recording with an ActiveTwo AD amplifier (Biosemi, Amsterdam, Netherlands)
-- Electrical events indicating the beginning of each cardiac cycle (R peaks) were extracted from the ECG signal with **Kubios 2.2** (Tarvainen et al., 2014, <http://kubios.uef.fi/>). 
+- **EEGlab** (*Delorme & Makeig, 2004*) was used as signal analysis tool to read bdf files from ECG recording with an ActiveTwo AD amplifier (Biosemi, Amsterdam, Netherlands)
+- Electrical events indicating the beginning of each cardiac cycle (R peaks) were extracted from the ECG signal with **Kubios 2.2** (*Tarvainen et al., 2014*, <http://kubios.uef.fi/>). 
 
 
 ## 2. Setup
@@ -97,8 +97,7 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 **1.B.** Create averaged ECG template for each participant and crop out template part that contains t-wave
 
-**1.C.** Compute Trapez area approach (Vázquez-
-25 Seisdedos et al., 2011): Create function to find end of t-wave in template
+**1.C.** Compute Trapez area approach (*Vázquez-Seisdedos et al., 2011*): Create function to find end of t-wave in template
 
 **1.D.** Apply trapez_area function to find t-wave end in template
 
