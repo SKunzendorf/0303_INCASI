@@ -25,7 +25,7 @@ For access to participants' data please contact: stella.kunzendorf[-at-]charite.
 Perception and cognition oscillate with fluctuating bodily states. For example, visual pro-cessing was shown to change with alternating cardiac phases. Here, we study the role of the heartbeat for active information sampling—testing whether humans implicitly act upon their environment so that relevant signals appear during preferred cardiac phases.
   During the encoding period of a visual memory experiment, participants clicked through a set of emotional pictures to memorize them for a later recognition test. By self-paced key press, they actively prompted the onset of shortly presented (100-ms) pictures. Simultaneously recorded electrocardiograms allowed us to analyse the self-initiated picture onsets relative to the heartbeat. We find that self-initiated picture onsets vary across the cardiac cycle, showing an increase during cardiac systole, while memory performance was not affected by the heartbeat. We conclude that active information sampling integrates heart-related signals, thereby extending previous findings on the association between body-brain interactions and behaviour.
 
-For a detailed description of the study, have a look at our manuscript on bioRxiv: (coming soon).
+For a detailed description of the study, have a look at our manuscript on bioRxiv: (<http://biorxiv.org/cgi/content/short/283838v1>).
 
 ---
 
