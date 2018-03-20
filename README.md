@@ -270,7 +270,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **2.A.** Circular analysis
 
-* 2.A.1. Exemplary participant-level analysis (c.f. Manuscript *Figure 2.b.*)
+* 2.A.1. Exemplary participant-level analysis 
 
 * 2.A.2. Group-level analysis
 
@@ -303,12 +303,12 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **2. Analyse ratings: Subjective perception of picture emotionality (normative vs. individual ratings)**
 
-**2.A.** Normative and individual means of picture ratings for arousal and valence (c.f. Manuscript *Supplementary Table 1*)
+**2.A.** Normative and individual means of picture ratings for arousal and valence
 
 **2.B.** Run tests to compare normative vs. individual ratings 
 
-* Run ANOVA to test ratings across rating category (normative, individual) and valence
-* Run one-sided ttests for normative vs. individual ratings across each valence level
+* Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
+* Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
 
 **2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Supplementary Figure 2*)
 
