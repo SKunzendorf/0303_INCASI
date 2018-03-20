@@ -97,7 +97,8 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 **1.B.** Create averaged ECG template for each participant and crop out template part that contains t-wave
 
-**1.C.** Compute Trapez area approach: Create function to find end of t-wave in template
+**1.C.** Compute Trapez area approach (Vázquez-
+25 Seisdedos et al., 2011): Create function to find end of t-wave in template
 
 **1.D.** Apply trapez_area function to find t-wave end in template
 
@@ -184,7 +185,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 * Short df with one row per participant
 
 
-### 3.1.2. Circular functions
+### 3.1.3. Circular functions
 
 Functions to compute within-subject (1. level) and group-level (2. level) circular analysis.
 
@@ -330,6 +331,8 @@ Schäfer, G., Rosenblum, M. G., Kurths, J., & Abel, H. H. (1998, March 19). Hear
 
 Tarvainen M. P., Niskanen J. P., Lipponen J. A., Ranta-Aho P. O., Karjalainen P. A. (2014). Kubios HRV – heart rate variability 
 analysis software. *Comput. Methods Programs Biomed., 113*, 210–220. *[URL] (https://www.sciencedirect.com/science/article/pii/S0169260713002599?via%3Dihub)*.
+
+Vázquez-Seisdedos, C. R., Neto, J. E., Marañón Reyes, E. J., Klautau, A., de Oliveira, R. C., & Limão de Oliveira, R. C. (2011). New approach for T-wave end detection on electrocardiogram: Performance in noisy conditions. *BioMedical Engineering OnLine, 10(1)*, 77. *[URL] (https://doi.org/10.1186/1475-925X-10-77)*
 
 Weissler, A. M., Harris, W. S., & Schoenfield, C. D. (1968). Systolic Time Intervals in Heart Failure in Man. *Circulation, 37(2)*, 149–159. Retrieved from *[URL] (http://circ.ahajournals.org/cgi/content/abstract/37/2/149)*
 
