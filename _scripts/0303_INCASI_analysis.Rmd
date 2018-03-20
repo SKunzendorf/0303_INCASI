@@ -851,7 +851,6 @@ triple_cor
 
 * Compare individual vs. normative ratings (mean, sd, se)
 
-* see also **Supplementary Table 1**:
 ```{r stimnum ratings}
 #----------------------------------------------------------------------------
 ## 1. AROUSAL: melt arousal ratings - melt rate_va
@@ -877,10 +876,9 @@ c_rat_v_all <- cast(m_rate_v, . ~ variable, c(mean, sd, length, se)) # over all 
 
 ### 2.B. Run tests to compare normative vs. individual ratings
 
-1. Run ANOVA to test ratings across rating category (normative, individual) and valence
-2. Run one-sided ttests for normative vs. individual ratings across each valence level
+1. Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
+2. Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
 
-* see also **Supplementary Table 1**:
 ```{r stimnum ratings run tests}
 #----------------------------------------------------------------------------
 ## 1. Run ANOVA:
