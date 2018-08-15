@@ -174,7 +174,7 @@ data_bins_enc <- data_bins[data_bins$vp %in% inc_clean,]
 
 * Exemplary stimulus distribution (120 black dots) across the cardiac cycle (Rpeak = 0) of one participant
 
-**Figure 2.b.**
+**Figure 1.b.**
 
 * Orange segment: individual systole (start: solid, end: dashed)
 * Blue segment: individual diastole (start: solid, end: dashed)
@@ -300,7 +300,7 @@ markup_lower <- which(ci_upper<dcircularuniform(1)) # lower CI bound
 
 Plot bootstrap density on circular plot with individual picture onset means:
 
-**Figure 1.a**:
+**Figure 2.a**:
 
 * Circular distribution of individual mean picture onsets (black dots, N = 43)
 * Black arrow: weighted overall mean of picture onsets as black arrow
@@ -493,7 +493,7 @@ data_bins_enc$col <- factor(data_bins_enc$col)
 
 c) Scatter plot for systolic vs. diastolic ratio
 
-**Figure 1.b**:
+**Figure 2.b**:
 
 * Systolic vs. diastolic ratio for each participant
 * Dashed lines: number of picture onsets that would be expected if they were uniformly distributed (resulting in a ratio = 1)
@@ -789,7 +789,7 @@ summary(res3)
 
 ### 1.C. Plot correlations
 
-* see also **Supplementary Figure 1**:
+* see also **Figure 3**:
 ```{r corr rec covariates plot}
 #--------------------------------------------------------------------------
 par(mar=c(0,0,0,0))
@@ -940,7 +940,7 @@ cohen.d(sub_neg$rate_arousal,sub_pos$rate_arousal)
 1. Plot Valence ratings
 2. Plot Arousal ratings
 
-* see **Supplementary Figure 2**:
+* see **Figure 4**:
 ```{r stimnum ratings plot}
 #----------------------------------------------------------------------------
 # 1. Valence ratings
@@ -992,7 +992,7 @@ cor_aro
 ## 3. Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)
 
 * plot correlations of heart phases
-* see **Supplementary Figure 3**:
+* see **Figure S1**:
 ```{r correlations cardiac parameters}
 #--------------------------------------------------------------------------
 # adapt participants to heart analysis -> include participants with high heart rate
