@@ -254,7 +254,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * 1.A.2. Group-level analysis
 
-* 1.A.3. Bootstrapping analysis (c.f. Manuscript *Figure 1.a*)
+* 1.A.3. Bootstrapping analysis (c.f. Manuscript *Figure 2.a*)
 
 
 **1.B.** Binary analysis
@@ -263,7 +263,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * 1.B.2 Run analysis: Compare systolic and diastolic ratio (paired t-test)
 
-* 1.B.3. Plot results with ggplot (c.f. Manuscript *Figure 1.b*)
+* 1.B.3. Plot results with ggplot (c.f. Manuscript *Figure 2.b*)
 
 
 **2. RECOGNITION - CARDIAC INFLUENCE ON RECOGNITION MEMORY**
@@ -299,7 +299,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **1.B.** Run correlations mean recognition performance ~ covariate
 
-**1.C.** Plot correlations (c.f. Manuscript *Supplementary Figure 1*)
+**1.C.** Plot correlations (c.f. Manuscript *Figure 3*)
 
 **2. Analyse ratings: Subjective perception of picture emotionality (normative vs. individual ratings)**
 
@@ -310,7 +310,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 * Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
 * Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
 
-**2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Supplementary Figure 2*)
+**2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Figure 4*)
 
 **3.Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)**
 
