@@ -154,7 +154,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 
 * **1.B.1.** For each key press, define the relative timepoint within the R-R interval, the R-R interval length, and the respective heart rate 
 
-* The relative phase of each key press (i.e. picture onset) is computed within the cardiac cycle, indicated in the ECG as the interval between the previous and the following R peak 
+  * The relative phase of each key press (i.e. picture onset) is computed within the cardiac cycle, indicated in the ECG as the interval between the previous and the following R peak 
 
 * **1.B.2.** For each key press, define the circular onset and cardiac phase (cf. Manuscript *Figure 2*)
 
@@ -209,7 +209,7 @@ default mode `= F`, select variables to be computed by writing `= T`:
 * **mean2**: second level mean
 
 
-Exemplary function input:
+**Exemplary function input:**
 * Compute circular analysis for participant 25, plot 1.level analysis, and display rayleigh-test output
 * Function output c.f. Manuscript *Figure 2.b.*
 
@@ -283,18 +283,18 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
   * Model significance tested with Likelihood ratio tests (LRT)
 
-    * **2.B.1.** Prepare dataframe for GLMM analysis
+  * **2.B.1.** Prepare dataframe for GLMM analysis
 
-    * **2.B.2.** Compute overall mean recognition performance
+  * **2.B.2.** Compute overall mean recognition performance
 
-    * **2.B.3.** Run models m0, m1
+  * **2.B.3.** Run models m0, m1
 
-    * **2.B.4.** Run model m2
+  * **2.B.4.** Run model m2
 
-    * **2.B.5.** Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
+  * **2.B.5.** Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
 
-      - Add picture as random factor (m0_p, m1_p, m2_p)
-      - Add individual ratings as fixed effect (m3, m4)
+    * Add picture as random factor (m0_p, m1_p, m2_p)
+    * Add individual ratings as fixed effect (m3, m4)
 
 
 ## SUPPLEMENTARY ANALYSES
