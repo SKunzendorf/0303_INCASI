@@ -29,7 +29,7 @@ For a detailed description of the study, have a look at our manuscript on bioRxi
 
 ---
 
-## 1. Prerequisites
+# 1. Prerequisites
 Programs you need to install prior to the analysis:
 - Our code is computed in the R Statistical Environment (v3.4.3) with **RStudio version 1.0.136** (*RStudio Team, 2016*)
 
@@ -38,7 +38,7 @@ Programs used for preprocessing the cardiac data (participants' preprocessed car
 - Electrical events indicating the beginning of each cardiac cycle (R peaks) were extracted from the ECG signal with **Kubios 2.2** (*Tarvainen et al., 2014*, <http://kubios.uef.fi/>). 
 
 
-## 2. Setup
+# 2. Setup
 
 **1.** Clone the `0303_INCASI` repository 
 ```
@@ -74,12 +74,12 @@ $ https://github.com/SKunzendorf/0303_INCASI.git
 - The file pathways are then created within the script (setup chunk)
 
 
-## 3. Scripts
+# 3. Scripts
 
 The scripts are to be run in the following order. Preprocessing can be skipped since output dataframes are provided under `_dataframes`. Main analysis can be run directly. 
 
 
-## 3.1. Preprocessing
+# 3.1. Preprocessing
 
 
 ### 3.1.1. Compute ECG-templates to prepare extraction of individual systole
@@ -189,7 +189,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 * Short df with one row per participant
 
 
-### 3.1.3. Circular functions
+# 3.2. Circular functions
 
 Functions to compute within-subject (1. level) and group-level (2. level) circular analysis.
 
@@ -241,7 +241,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 
 
-## 3.3. Run analysis
+# 3.3. Run analysis
 
 ### `0303_INCASI_analysis.Rmd`
 
