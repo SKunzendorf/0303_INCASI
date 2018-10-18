@@ -895,7 +895,7 @@ cor_sysdias_ia <- ggplot(intdiff_phase1,aes(x=iaz,y=click_lvet_rel))+
   geom_point(aes(x=iaz,y=click_alldias_rel), colour = defmedblue,  size = 2)+
   labs(x = "Interoceptive accuracy (z-transformed)", y = "Individual ratios") +
   mytheme
-cor_sysdias_ia
+# cor_sysdias_ia
 
 # STAI
 cor_sysdias_stai <- ggplot(intdiff_phase,aes(x=staiz,y=click_lvet_rel))+
@@ -905,7 +905,7 @@ cor_sysdias_stai <- ggplot(intdiff_phase,aes(x=staiz,y=click_lvet_rel))+
   geom_point(aes(x=staiz,y=click_alldias_rel), colour = defmedblue,  size = 2)+
   labs(x = "Trait anxiety (z-transformed)", y = "Individual ratios") +
   mytheme
-cor_sysdias_stai
+# cor_sysdias_stai
 
 # HRV
 cor_sysdias_hrv <- ggplot(intdiff_phase,aes(x=rmssdl,y=click_lvet_rel))+
@@ -915,7 +915,7 @@ cor_sysdias_hrv <- ggplot(intdiff_phase,aes(x=rmssdl,y=click_lvet_rel))+
   geom_point(aes(x=rmssdl,y=click_alldias_rel), colour = defmedblue,  size = 2)+
   labs(x = "rMSSD (log-transformed)", y = "Individual ratios") +
   mytheme
-cor_sysdias_hrv
+# cor_sysdias_hrv
 
 #--------------------------------------------------------------------------
 # Triple plot
@@ -943,6 +943,7 @@ triple_cor_sysdias
 ```{r corr rec covariates prep}
 #--------------------------------------------------------------------------
 # prepare dataframe
+idx <- which(is.na(data$answer)==FALSE)
 d <- data[idx,] # df for memory probes 
 
 # add covariates
@@ -1027,7 +1028,7 @@ cor_perfhrv <- ggplot(c0c1,aes(x=rmssdl,y=answer))+
   geom_point()+
   labs(x = "rMSSD (log-transformed)", y = "Mean recognition performance") +
   mytheme
-cor_perfhrv
+# cor_perfhrv
 # dev.off()
 
 #--------------------------------------------------------------------------
@@ -1041,7 +1042,7 @@ cor_perfstaiz <- ggplot(c0c2,aes(x=staiz,y=answer))+
   geom_point()+
   labs(x = "Trait anxiety (z-transformed)", y = "Mean recognition performance") +
   mytheme
-cor_perfstaiz 
+# cor_perfstaiz 
 # dev.off()
 
 #--------------------------------------------------------------------------
@@ -1055,14 +1056,14 @@ cor_perfiaz <- ggplot(c01c3,aes(x=IAz,y=answer))+
   geom_point()+
   labs(x = "Interoceptive Accuracy (z-transformed)", y = "Mean recognition performance") +
   mytheme
-cor_perfiaz 
+# cor_perfiaz 
 # dev.off()
 
 #--------------------------------------------------------------------------
-pdf(file = paste(path_figures, "triple_cor_update", ".pdf", sep=""), width=10, height=3.5)
+# pdf(file = paste(path_figures, "triple_cor_update", ".pdf", sep=""), width=10, height=3.5)
 triple_cor <- plot_grid(cor_perfiaz, cor_perfstaiz, cor_perfhrv, ncol=3, align = "h", labels = c("a", "b", "c"), label_size = 14)
 triple_cor
-dev.off()
+# dev.off()
 #--------------------------------------------------------------------------
 ```
 
@@ -1487,7 +1488,6 @@ colnames(melt_phase) <- c("vp", "phase", "length")
 #--------------------------------------------------------------------------
 # before plotting: load script `loadTHeme.R` and change legend parameter to enable legend
 
-# pdf(file = paste(path_figures, "fig_cf_sysdias",".pdf",sep=""),width=4.5,height=4.5)
 fig_cf_sysdias <- ggplot(data = melt_phase) +
   
   # histo sys dias
@@ -1505,8 +1505,10 @@ labels=c(syspat="Systole", diaspat="Diastole")) +
   mytheme +
   theme(legend.position = c(0.8, 0.9))
 
+# pdf(file = paste(path_figures, "fig_cf_sysdias",".pdf",sep=""),width=4.5,height=4.5)
 print(fig_cf_sysdias)
 # dev.off()
+#--------------------------------------------------------------------------
 ```
 
 
@@ -1523,8 +1525,6 @@ check_phase$phase_rank <- as.numeric(rank((check_phase$syspat + check_phase$dias
 check_phase$length_rank <- as.numeric(rank(check_phase$diaspat, ties.method = "first"))
 
 #--------------------------------------------------------------------------
-#pdf(file = paste(path_figures, "fig_phase_lengths_new",".pdf",sep=""),width=4.5,height=4.5)
-
 fig_phase_length <- ggplot(data=check_phase) + 
   
   ## systole - template range
@@ -1544,14 +1544,15 @@ fig_phase_length <- ggplot(data=check_phase) +
   coord_flip() + 
   mytheme 
 
+pdf(file = paste(path_figures, "fig_phase_lengths_new",".pdf",sep=""),width=4.5,height=4.5)
 print(fig_phase_length)
-#dev.off()
+dev.off()
 
 #--------------------------------------------------------------------------
-pdf(file = paste(path_figures, "dbl_phase", ".pdf", sep=""), width=10, height=4.5)
+# pdf(file = paste(path_figures, "dbl_phase", ".pdf", sep=""), width=10, height=4.5)
 dbl_phase <- plot_grid(fig_cf_sysdias, fig_phase_length, ncol=2, align = "h", labels = c("a", "b"), label_size = 14)
 dbl_phase
-dev.off()
+# dev.off()
 #--------------------------------------------------------------------------
 ```
 
