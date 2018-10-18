@@ -1,7 +1,7 @@
 ---
 title: "0303_INCASI_preprocess_b"
 author: "Stella"
-date: "3 March 2018"
+date: "18 October 2018"
 output: html_document
 ---
 
@@ -46,80 +46,73 @@ inc_list <- as.factor(dir(path_data)) #create inc_list with all inc04 - inc50
 #--------------------------------------------------------------------------
 # specify ECG sampling frequency (in Hz)
 ecg_sf <-  2048 # --> 1 datapoint every 0.4882812 ms (1000/2048)
+#--------------------------------------------------------------------------
 ```
 
 
-####  2. Load dataframes for analysis: 
+#### 2. Load dataframes for main analysis: 
 ```{r scripts analysis, message = FALSE}
 #----------------------------------------------------------------------------
 # dataframes for analysis encoding 
 load(paste(path_dataframes,"logfiles_all.RData", sep='')) # raw log_encode, log_recall, log_rate 
 load(paste(path_dataframes,"main_exg2_peaks_s_list.RData", sep='')) # ecg lead with peaks (if already created, see below)
 
-# load defined cardiac phases (created in templates_t_q)
+# load defined cardiac phases (created in script `templates_t_q`)
 load(paste(path_dataframes,"fin_sys_dur_s.RData", sep="")) # load interval from Rpeak until twave end (created in templates_t_q)
 load(paste(path_dataframes, "qonR_s.RData", sep="")) # load detected qwave-Rpeak lengths (created in templates_t_q)
 #----------------------------------------------------------------------------
 ```
 
 
-#### 3. Prepare supplementary analysis of picture ratings
-
-* Load normative ratings from csv files
-* `emopics_norms`: df with normative valence and arousal ratings for each picture (180 pictures)
-```{r rating norm}
+#### 3. Load parameters for picture matching (EmoPicS)
+* physical image paramenters (luminance, contrast, RGB, complexity)
+* high-level parameters (number of people, group/social interaction, close-up, eye-contact)
+```{r picture matching}
 #----------------------------------------------------------------------------
-# load normative data (norms_valence, norms_arousal) from EmoPics csv
-rate_pos <- read.csv(file = paste(path_variables, "EmoPics_pos.csv", sep=""), header=TRUE, sep = ';', dec = ",")
-rate_pos$valence <- "positiv"
-rate_neu <- read.csv(file = paste(path_variables, "EmoPics_neu.csv", sep=""), header=TRUE, sep = ';', dec = ",")
-rate_neu$valence <- "neutral"
-rate_neg <- read.csv(file = paste(path_variables, "EmoPics_neg.csv", sep=""), header=TRUE, sep = ';', dec = ",")
-rate_neg$valence <- "negativ"
+# load dataframes
+match_neu <- read.csv(file = paste(path_variables, "EmoPics_match_neu_o.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+match_neu$valence <- "neutral"
 
-emopics_norms <- rbind(rate_pos, rate_neu, rate_neg)
+match_pos <- read.csv(file = paste(path_variables, "EmoPics_match_pos_o.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+match_pos$valence <- "positiv"
 
-#save(emopics_norms, file = paste(path_dataframes,"emopics_norms.RData", sep="")) # save emopic ratings
-#----------------------------------------------------------------------------
+match_neg <- read.csv(file = paste(path_variables, "EmoPics_match_neg_o.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+match_neg$valence <- "negativ"
+
+emopics_match <- rbind(match_pos, match_neu, match_neg)
+
+emopics_match$valence <- factor(emopics_match$valence)
+emopics_match[is.na(emopics_match)] <- 0 # replace NAs with 0
+
+# save(emopics_match, file = paste(path_dataframes,"emopics_match.RData", sep="")) # save emopic picutre factors
+#--------------------------------------------------------------------------
 ```
 
 
-* Load experimental ratings from rating period
-* `c_rate_stim`: df with individual mean valence and arousal ratings for each picture
-* `rate_va`: joint dataframe of normative and individual ratings for arousal and valence
-```{r rating individual}
-#----------------------------------------------------------------------------
-## experimental ratings: mean valence and arousal ratings for each pic 
-m_rate_stim <- melt(log_rate, id = c("stimnum", "valence"), measure = c("rate_valence", "rate_arousal"))
-c_rate_stim <- cast(m_rate_stim, stimnum * valence ~ variable, mean, na.rm = T)
+#### 4. Load dataframes for additional individual variables
 
-# rate_va: join df with mean experimental + normative ratings for each picture
-# valence: rate_valence, norms_valence
-# arousal: rate_arousal, norms_arousal
-rate_va <- left_join(c_rate_stim, emopics_norms[1:3], by = c('stimnum'))
-
-# save(rate_va, file = paste(path_dataframes,"rate_va.RData", sep="")) # save rate_va
-#----------------------------------------------------------------------------
-```
-
-
-#### 4. Prepare supplementary analysis of covariates
-
-* Age
-* Interoceptive Accuracy (IA)
-* Trait anxiety (STAI)
-* Heart Rate Variability (HRV: mean RR, rmssd)
+* 1. Age
+* 2. Blood pressure
+* 3. Interoceptive Accuracy (IA)
+* 4. Trait anxiety (STAI)
+* 5. Heart Rate Variability (HRV: mean RR, rmssd)
 
 ```{r analyse covariates}
 #--------------------------------------------------------------------------
 # load dataframes
-## age
+## 1. Age
 data_age <- read.csv(file = paste(path_variables, "INCASI_age.csv", sep=""), header=TRUE, sep = ';', dec = ",")  # age df
+# save(data_age, file = paste(path_dataframes,"data_age.RData", sep="")) # save stai
 
-## IA
-load(paste(path_dataframes, "score.RData", sep="")) # hbp score df
+## 2. BP
+data_bp <- read.csv(file = paste(path_variables, "BP_data.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+data_bp$vp <- as.factor(data_bp$vp)
+# save(data_bp, file = paste(path_dataframes,"data_bp.RData", sep="")) # save blood pressure values
 
-## HRV
+## 3. IA
+load(paste(path_dataframes, "score.RData", sep="")) # hbp score df with IA scores
+
+## 4. HRV
 # a. read mean HR, rmssd, mean R-R (from main file = experimental period)
 kubios_main <- read.csv(file = paste(path_variables, "data_kubios_main.csv", sep=""), header=TRUE, sep = ';', dec = ",")
 
@@ -128,7 +121,7 @@ kubios <- read.csv(file = paste(path_variables, "data_kubios_rest.csv", sep=""),
 
 # save(kubios, file = paste(path_dataframes,"kubios.RData", sep="")) # save kubios
 
-## STAI
+## 5. STAI
 stai <- data.frame(read.csv(file = paste(path_variables, "STAIT.csv", sep=""), header=TRUE, sep = ';', dec = ","))
 stai$stai_sum <- rowSums(stai[2:length(stai)])
 stai <- stai[!stai$vp == "inc48",] # exclude participant inc_48 (extrasystoles) to fit inc_list
@@ -197,6 +190,46 @@ data_var <- join_all(list(split_IA, split_stai, split_rmssd), by = c("vp")) # df
 ```
 
 
+#### 5. Prepare supplementary analysis of picture ratings
+
+* Load normative ratings from csv files
+* `emopics_norms`: df with normative valence and arousal ratings for each picture (180 pictures)
+```{r rating norm}
+#----------------------------------------------------------------------------
+# load normative data (norms_valence, norms_arousal) from EmoPics csv
+rate_pos <- read.csv(file = paste(path_variables, "EmoPics_pos.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+rate_pos$valence <- "positiv"
+rate_neu <- read.csv(file = paste(path_variables, "EmoPics_neu.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+rate_neu$valence <- "neutral"
+rate_neg <- read.csv(file = paste(path_variables, "EmoPics_neg.csv", sep=""), header=TRUE, sep = ';', dec = ",")
+rate_neg$valence <- "negativ"
+
+emopics_norms <- rbind(rate_pos, rate_neu, rate_neg)
+
+#save(emopics_norms, file = paste(path_dataframes,"emopics_norms.RData", sep="")) # save emopic ratings
+#----------------------------------------------------------------------------
+```
+
+
+* Load experimental ratings from rating period
+* `c_rate_stim`: df with individual mean valence and arousal ratings for each picture
+* `rate_va`: joint dataframe of normative and individual ratings for arousal and valence
+```{r rating individual}
+#----------------------------------------------------------------------------
+## experimental ratings: mean valence and arousal ratings for each pic 
+m_rate_stim <- melt(log_rate, id = c("stimnum", "valence"), measure = c("rate_valence", "rate_arousal"))
+c_rate_stim <- cast(m_rate_stim, stimnum * valence ~ variable, mean, na.rm = T)
+
+# rate_va: join df with mean experimental + normative ratings for each picture
+# valence: rate_valence, norms_valence
+# arousal: rate_arousal, norms_arousal
+rate_va <- left_join(c_rate_stim, emopics_norms[1:3], by = c('stimnum'))
+
+# save(rate_va, file = paste(path_dataframes,"rate_va.RData", sep="")) # save rate_va
+#----------------------------------------------------------------------------
+```
+
+
 # 1. PREPARE LONG DATAFRAME: LOG_ENCODE
 
 * **`log_encode`**: edit log_encode (one row per trial)
@@ -210,8 +243,6 @@ data_var <- join_all(list(split_IA, split_stai, split_rmssd), by = c("vp")) # df
 * Systolic intervals (pre-ejection period, ejection-period) vary inversly with HR -> corrections for variation in heart rates is required
 * Regression equations relate interval length to the mean HR
 * Most widely applied those by Weissler, Harris and Schoenfeld (1968):  recorded in normal subjects with wide range of resting HR
-
-* PEP is then substracted from the whole systolic interval (q-wave onset until t-wave end) to extract individual ejection-phases (s. below)
 
 ```{r function callsti}
 # create function to calculate pre-ejection period based on Weissler regression equations (1968)
@@ -324,7 +355,7 @@ To prepare binary analysis: Cardiac cycle is segmented into several intervals:
 * **sys1**: first half of ejection period (length: 0.5 * syspat)
 * **sys2**: second half of ejection period (length: 0.5 * syspat)
 
-* **diaspat**: remaining diastole (R-R - syspat - qs2)
+* **diaspat**: remaining diastole (R-R - (pep + syspat + 50 ms)
 * dias1 to dias4: diastolic bins of same length (lenght: 0.25 * diaspat)
 
 Define the two cardiac phases systole, diastole:
@@ -348,7 +379,7 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
   
     #--------------------------------------------------------------------------
     dif <- log_encode$diff_click_peak_s[iclick] # vector dif with time interval from each click to preceding R (sec)
-
+    
     # 1. CIRCULAR: transform dif (sec) into radian = relative phase of click1onset within cardiac cycle: 2 * pi * (HR_1permin/60) * (diff_click_peak_s)
     log_encode$radclick[iclick] <- (2 * pi * (log_encode$HR_1perSec[iclick]) * (dif)) 
     dif_rad <- log_encode$radclick[iclick] 
@@ -362,7 +393,7 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
     x <-  mean(log_encode$HR_1perMin[log_encode$vp == part])  # compute participant's mean heart rate during encoding
     sitvec <- callsti(x, log_encode, iclick) # vector with pre-ejection period (calculated from qwave)
     
-    log_encode$pep[iclick] <- sitvec["pep"] # pre-ejection period 
+    log_encode$pep[iclick] <- sitvec["pep"] # pre-ejection period (one value per subject)
     log_encode$qonR[iclick] <- qonR_s[part] # difference from qonset to R 
     log_encode$crop[iclick] <- sitvec["pep"] - qonR_s[part] # crop: remaining part of pre-ejection, after cropping out qonR
     log_encode$Rtend_s[iclick] <- sys_dur_s[part] #interval from R to tend
@@ -392,8 +423,8 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
     log_encode$click_dias3[iclick] <- as.numeric(dif > (Rtendx + 0.5*diaspat) & (dif <= (Rtendx + 0.75*diaspat)))
     log_encode$click_dias4[iclick] <- as.numeric(dif > (Rtendx + 0.75*diaspat) & (dif <= Rtendx + diaspat))
     
-    # click in non-defined
-    log_encode$click_pep[iclick] <- as.numeric((dif <= crop) | (dif > (Rtendx + diaspat))) #pep
+    # click in security intervals (pep, 50 ms)
+    log_encode$click_pep[iclick] <- as.numeric((dif <= crop) | (dif > (Rtendx + diaspat))) #pep (i.e., falls either in crop, or in qonR)
     log_encode$click_x[iclick] <-  as.numeric((dif <= Rtendx) & (dif > (crop + syspat))) # security window
     
     # click_bin
@@ -421,7 +452,7 @@ for (part in inc_list[1:length(inc_list)]) {  # loop over participants
 
 * Analysis of recognition performance (hit, miss), relative to phase of stimulus onset in encoding 
 ```{r add recognition parameters to log_encode}
-
+#--------------------------------------------------------------------------
 # create new columns to check det = HIT, MISS relative to CLICK: sys vs. dias, dias_bin
 log_encode$hit_pep <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_pep == 1)) # hits in pep
 log_encode$hit_sys1 <- as.numeric((log_encode$detection == "HIT") & (log_encode$click_sys1 == 1)) # hits in sys
@@ -478,7 +509,7 @@ log_encode <- left_join(log_encode, log_rate_subs, by = c('vp', 'stimnum'))
 
 # add normative arousal ratings to log_encode
 log_encode <- left_join(log_encode, emopics_norms[1:3], by = c('stimnum'))
-
+log_encode$vp <- factor(log_encode$vp)
 # save(log_encode, file = paste(path_dataframes,"log_encode.RData", sep="")) # save log_encode
 #--------------------------------------------------------------------------
 ```
