@@ -86,16 +86,9 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 ## `templates_t_q.Rmd`
 
-*Script outline:*
-
 **1. T-TEMPLATE**
 
-* ECG-template from Rpeak until **end of 
-
-
-
-
-** is computed for each participant
+* ECG-template from Rpeak until **end of T-wave** is computed for each participant
 * Systole end is defined by T-wave end in individual ECG-templates
 
 **1.A.** Create list of dataframes to prepare averaged ECG template for each subject
@@ -135,8 +128,6 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 ## `0303_INCASI_preprocess_a.Rmd`
 
-*Script outline:*
-
 **1. LOAD BEHAVIOURAL DATA INTO LOG FILE**
 
 Behavioural data (from stimulation) is loaded into dataframe (one row per trial), and split into 3 dataframes according to experimental sessions:
@@ -151,8 +142,6 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 
 
 ## `0303_INCASI_preprocess_b.Rmd`
-
-*Script outline:*
 
 **1. PREPARE LONG DATAFRAME: `LOG_ENCODE`**
 * Long df with one row per trial
@@ -247,7 +236,6 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 - **Caveat**: If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
 
-*Script outline:*
 
 #### MAIN ANALYSIS
 
