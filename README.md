@@ -88,8 +88,8 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 **1. T-template**
 
-* ECG-template from Rpeak until **end of T-wave** is computed for each participant
-* Systole end is defined by T-wave end in individual ECG-templates
+  * ECG-template from Rpeak until **end of T-wave** is computed for each participant
+  * Systole end is defined by T-wave end in individual ECG-templates
 
 * **1.A.** Create list of dataframes to prepare averaged ECG template for each subject
 
@@ -104,9 +104,9 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 **2. Q-template**
 
-* ECG-template from **Q-wave onset** until Rpeak for each participant
-* Q-wave onset is needed as start point for the pre-ejection phase (PEP, determined by regression equation, see preprocessing_b, based on *Weissler et al., 1968*)
-* The PEP is then substracted from the whole interval (Q-wave until T-wave end) to determine the systolic ejection period (see preprocessing_b)
+  * ECG-template from **Q-wave onset** until Rpeak for each participant
+  * Q-wave onset is needed as start point for the pre-ejection phase (PEP, determined by regression equation, see preprocessing_b, based on *Weissler et al., 1968*)
+  * The PEP is then substracted from the whole interval (Q-wave until T-wave end) to determine the systolic ejection period (see preprocessing_b)
 
 * **2.A.** Create list of dataframes to prepare averaged ECG template for each subject
 
@@ -115,7 +115,7 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 **3. Overall check of defined cardiac intervals**
 
-* Determined cardiac intervals (i.e., pre-ejection phase, ejection phase, from preprocessing_b) are needed for this step
+  * Determined cardiac intervals (i.e., pre-ejection phase, ejection phase, from preprocessing_b) are needed for this step
 
 * **3.A.** Visual Check of systole template (systolic ejection-phase) in participants ECG templates
 
@@ -132,9 +132,9 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 Behavioural data (from stimulation) is loaded into dataframe (one row per trial), and split into 3 dataframes according to experimental sessions:
 
-* `log_encode` : encoding period
-* `log_recall` : recognition period
-* `log_rate` : rating period
+  * `log_encode` : encoding period
+  * `log_recall` : recognition period
+  * `log_rate` : rating period
 
 **2. Define detection variables (for analysis recognition phase)**
 
@@ -270,18 +270,18 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **2.B.Binary analysis**
 
-* General Linear mixed models (GLMMs) for binomial data with subject as random factor (c.f. Manuscript *Table 1*)
-  * **m0**: recognition memory ~ 1 + (1|subject)
-  * **m1**: recognition memory ~ valence + (1|subject)
-  - **m2**: recognition memory ~ valence * cardiac phase + (1|subject) (main model of interest)
+  * General Linear mixed models (GLMMs) for binomial data with subject as random factor (c.f. Manuscript *Table 1*)
+    * **m0**: recognition memory ~ 1 + (1|subject)
+    * **m1**: recognition memory ~ valence + (1|subject)
+    * **m2**: recognition memory ~ valence * cardiac phase + (1|subject) (main model of interest)
 
-* Dependent variable: recognition memory (coding: 0 = miss, 1 = hit) 
-* Independent within-subject variables:
-  - cardiac phase: 0 = diastole, 1 = systole
-  - valence: three valence levels (positive, negative, neutral), contrast-coded with neutral as baseline condition:   
-    positive-neutral, negative-neutral
+  * Dependent variable: recognition memory (coding: 0 = miss, 1 = hit) 
+  * Independent within-subject variables:
+    * cardiac phase: 0 = diastole, 1 = systole
+    * valence: three valence levels (positive, negative, neutral), contrast-coded with neutral as baseline condition:   
+      positive-neutral, negative-neutral
 
-* Model significance tested with Likelihood ratio tests (LRT)
+  * Model significance tested with Likelihood ratio tests (LRT)
 
 * **2.B.1.** Prepare dataframe for GLMM analysis
 
