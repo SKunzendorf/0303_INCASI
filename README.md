@@ -158,14 +158,14 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 
 * **1.B.2.** For each key press, define the circular onset and cardiac phase (cf. Manuscript *Figure 2*)
 
-  1) **Circular analysis**: to exploit the oscillatory (repeating cycle of cardiac events) character of the heartbeat
+  * **Circular analysis**: to exploit the oscillatory (repeating cycle of cardiac events) character of the heartbeat
 
-  - According to its relative timing within this R-R interval, radian values between 0 and 2π are assigned to each stimulus (*Ohl et al., 2016; Pikovsky, Rosenblum, & Kurths, 2003; Schäfer, Rosenblum, Kurths, & Abel, 1998*). 
+    * According to its relative timing within this R-R interval, radian values between 0 and 2π are assigned to each stimulus (*Ohl et al., 2016; Pikovsky, Rosenblum, & Kurths, 2003; Schäfer, Rosenblum, Kurths, & Abel, 1998*). 
 
-  2) **Binary analysis**: to exploit the phasic (two distinct cardiac phases: systole and diastole) character of the heartbeat
+  * **Binary analysis**: to exploit the phasic (two distinct cardiac phases: systole and diastole) character of the heartbeat
 
-  - To account for inter-individual differences in cardiac phase lengths, participant-specific phases are computed based on the ECG (for detailed description of the binning procedure cf. Manuscript *Supplementary Methods*)
-  - Picture onsets are binned into either individual systole, diastole, or non-defined cardiac phases (pre-ejection period, 50ms security window between end of stystole and start of diastole)
+    * To account for inter-individual differences in cardiac phase lengths, participant-specific phases are computed based on the ECG (for detailed description of the binning procedure cf. Manuscript *Supplementary Methods*)
+    * Picture onsets are binned into either individual systole, diastole, or non-defined cardiac phases (pre-ejection period, 50ms security window between end of stystole and start of diastole)
 
 
 * **1.B.3.** Recognition (hits, misses) is defined relative to the cardiac phase (systole, diastole) of picture onset in encoding
@@ -241,7 +241,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **1. Encoding - cardiac influence on visual sampling**
 
-**1.A. CIRCULAR ANALYSIS**
+**1.A. Circular analysis**
 
 * **1.A.1.** Exemplary participant-level analysis (c.f. Manuscript *Figure 1.b.*)
 
@@ -250,7 +250,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 * **1.A.3.** Bootstrapping analysis (c.f. Manuscript *Figure 2.a*)
 
 
-**1.B. BINARY ANALYSIS**
+**1.B. Binary analysis**
 
 * **1.B.1.** Define ratios for both phases (systole, diastole)
 
@@ -261,18 +261,18 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **2. Recognition - cardiac influence on recognition memory**
 
-**2.A. CIRCULAR ANALYSIS**
+**2.A. Circular analysis**
 
 * **2.A.1.** Exemplary participant-level analysis 
 
 * **2.A.2.** Group-level analysis
 
 
-**2.B.BINARY ANALYSIS**
+**2.B.Binary analysis**
 
 * General Linear mixed models (GLMMs) for binomial data with subject as random factor (c.f. Manuscript *Table 1*)
-  - **m0**: recognition memory ~ 1 + (1|subject)
-  - **m1**: recognition memory ~ valence + (1|subject)
+  * **m0**: recognition memory ~ 1 + (1|subject)
+  * **m1**: recognition memory ~ valence + (1|subject)
   - **m2**: recognition memory ~ valence * cardiac phase + (1|subject) (main model of interest)
 
 * Dependent variable: recognition memory (coding: 0 = miss, 1 = hit) 
