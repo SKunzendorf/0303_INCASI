@@ -283,15 +283,15 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * Model significance tested with Likelihood ratio tests (LRT)
 
-* 2.B.1. Prepare dataframe for GLMM analysis
+* **2.B.1.** Prepare dataframe for GLMM analysis
 
-* 2.B.2. Compute overall mean recognition performance
+* **2.B.2.** Compute overall mean recognition performance
 
-* 2.B.3. Run models m0, m1
+* **2.B.3.** Run models m0, m1
 
-* 2.B.4. Run model m2
+* **2.B.4.** Run model m2
 
-* 2.B.5. Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
+* **2.B.5.** Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
 
   1) Add picture as random factor (m0_p, m1_p, m2_p)
   2) Add individual ratings as fixed effect (m3, m4)
@@ -301,63 +301,63 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **1. Correlation of self-paced sampling with inter-individual differences (cf. Revision: Reviewer 1, comment #1)**
 
-  **1.A.** Prepare dataframe and include inter-individual differences
+* **1.A.** Prepare dataframe and include inter-individual differences
 
-  * **Heart rate variability** (RMSSDl: log-transformed to mitigate skewedness and centred to the mean) 
-  * **Trait Anxiety** (STAIz: z-transformed)
-  * **Interoceptive Awareness** (IAz: z-transformed)
+    1) **Heart rate variability** (RMSSDl: log-transformed to mitigate skewedness and centred to the mean) 
+    2) **Trait Anxiety** (STAIz: z-transformed)
+    3) **Interoceptive Awareness** (IAz: z-transformed)
 
-  **1.B.** Run correlations
+* **1.B.** Run correlations
 
-  **1.C.** Plot correlations (c.f. Manuscript *Figure 3*)
+* **1.C.** Plot correlations (c.f. Manuscript *Figure 3*)
 
 
 
 **2. Correlation of recognition memory with inter-individual differences**
 
-  **2.A.** Prepare dataframe and include inter-individual differences (RMSSDl, STAIz, IAz, see above)
+* **2.A.** Prepare dataframe and include inter-individual differences (RMSSDl, STAIz, IAz, see above)
 
-  **2.B.** Run correlations
+* **2.B.** Run correlations
 
-  **2.C.** Plot correlations (c.f. Manuscript *Figure 4*)
+* **2.C.** Plot correlations (c.f. Manuscript *Figure 4*)
 
 
 
 **3. Analyse ratings: Subjective perception of picture emotionality (normative vs. individual ratings)**
 
-  **3.A.** Normative and individual means of picture ratings for arousal and valence
+* **3.A.** Normative and individual means of picture ratings for arousal and valence
 
-  **3.B.** Run tests to compare normative vs. individual ratings 
+* **3.B.** Run tests to compare normative vs. individual ratings 
 
     1) Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
     2) Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
 
-  **3.C.** Plot normative vs. individual ratings (c.f. Manuscript *Figure 5*)
+* **3.C.** Plot normative vs. individual ratings (c.f. Manuscript *Figure 5*)
 
 
 **4. Test match of picture features (EmoPicS)**
 
-  **4.A.** Test match of physical picture features (luminance, contrast, complexity)
+* **4.A.** Test match of physical picture features (luminance, contrast, complexity)
 
-  **4.B.** Test match of high-level picture features (person count, social interaction, close-ups, eye contact)
+* **4.B.** Test match of high-level picture features (person count, social interaction, close-ups, eye contact)
 
 
 ## SUPPLEMENTARY METHODS
 
 **1. Correlations of individual systoles and heart rate (HR)**
 
-  **1.A.** Summary of cardiac phases relative to HR
+* **1.A.** Summary of cardiac phases relative to HR
 
-  **1.B.** Test correlations 
+* **1.B.** Test correlations 
 
-  **1.C.** Plot correlations (c.f. Manuscript *Figure S1*)
+* **1.C.** Plot correlations (c.f. Manuscript *Figure S1*)
 
 
 **2. Ranges and lengths of cardiac phases**
 
-  **2.A.** Summary of cardiac phase ranges and lengths
+* **2.A.** Summary of cardiac phase ranges and lengths
 
-  **2.B.** Plot phase ranges and lengths (c.f. Manuscript *Figure S2*)
+* **2.B.** Plot phase ranges and lengths (c.f. Manuscript *Figure S2*)
 
     1) Cumulative frequency
     2) Mean phase ranges for each participant (relative to R-peak)
