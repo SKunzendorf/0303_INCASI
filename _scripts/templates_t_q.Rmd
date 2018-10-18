@@ -61,15 +61,15 @@ load(paste(path_dataframes,"log_encode.RData", sep="")) # long dataframe encodin
 
 #--------------------------------------------------------------------------
 ## df for T-template
-load(paste(path_dataframes, "rst_list.RData", sep="")) # list with dataframes to average RST example (to create, see below)
+# load(paste(path_dataframes, "rst_list.RData", sep="")) # list with dataframes to average RST example (to create, see below)
 
-load(paste(path_dataframes, "fin_sys_dur_s.RData", sep="")) # list of T-Templates (from Rpeak to T-wave end) (to create, see below)
+# load(paste(path_dataframes, "fin_sys_dur_s.RData", sep="")) # list of T-Templates (from Rpeak to T-wave end) (to create, see below)
 
 #--------------------------------------------------------------------------
 # df for Q-template
-load(paste(path_dataframes, "qrst_list.RData", sep="")) # list with dataframes to average QRST example (to create, see below)
+# load(paste(path_dataframes, "qrst_list.RData", sep="")) # list with dataframes to average QRST example (to create, see below)
 
-load(paste(path_dataframes, "qonR_s.RData", sep="")) # list of Q-templates (from Q-wave onset to Rpeak) (to create, see below)
+# load(paste(path_dataframes, "qonR_s.RData", sep="")) # list of Q-templates (from Q-wave onset to Rpeak) (to create, see below)
 #--------------------------------------------------------------------------
 ```
 
