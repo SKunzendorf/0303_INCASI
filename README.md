@@ -299,7 +299,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 #### SUPPLEMENTARY ANALYSES
 
-**1. Correlation of self-paced sampling with inter-individual differences (cf. Revision: Reviewer 1, comment #1)
+**1. Correlation of self-paced sampling with inter-individual differences (cf. Revision: Reviewer 1, comment #1)**
 
 **1.A.** Prepare dataframe and include inter-individual differences
 
