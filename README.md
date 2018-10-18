@@ -273,7 +273,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 * General Linear mixed models (GLMMs) for binomial data with subject as random factor (c.f. Manuscript *Table 1*)
   - **m0**: recognition memory ~ 1 + (1|subject)
   - **m1**: recognition memory ~ valence + (1|subject)
-  - **m1**: recognition memory ~ valence * cardiac phase + (1|subject) (main model of interest)
+  - **m2**: recognition memory ~ valence * cardiac phase + (1|subject) (main model of interest)
 
 * Dependent variable: recognition memory (coding: 0 = miss, 1 = hit) 
 * Independent within-subject variables:
@@ -293,8 +293,8 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * 2.B.5. Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
 
-  1) Add picture as random factor
-  2) Add individual ratings as fixed effect
+  1) Add picture as random factor (m0_p, m1_p, m2_p)
+  2) Add individual ratings as fixed effect (m3, m4)
   
 
 #### SUPPLEMENTARY ANALYSES
