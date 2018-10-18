@@ -86,7 +86,7 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 ## `templates_t_q.Rmd`
 
-**1. T-TEMPLATE**
+**1. T-template**
 
 * ECG-template from Rpeak until **end of T-wave** is computed for each participant
 * Systole end is defined by T-wave end in individual ECG-templates
@@ -102,7 +102,7 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 * **1.E.** Compare t-template with actual ECG trace (check correlations and check visually)
 
 
-**2. Q-TEMPLATE**
+**2. Q-template**
 
 * ECG-template from **Q-wave onset** until Rpeak for each participant
 * Q-wave onset is needed as start point for the pre-ejection phase (PEP, determined by regression equation, see preprocessing_b, based on *Weissler et al., 1968*)
@@ -113,7 +113,7 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 * **2.B.** Create averaged ECG template (containing QRST waves) for each participant and define interval from Q-wave onset until Rpeak
 
 
-**3. OVERALL CHECK OF DEFINED CARDIAC INTERVALS**
+**3. Overall check of defined cardiac intervals**
 
 * Determined cardiac intervals (i.e., pre-ejection phase, ejection phase, from preprocessing_b) are needed for this step
 
@@ -128,7 +128,7 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 ## `0303_INCASI_preprocess_a.Rmd`
 
-**1. LOAD BEHAVIOURAL DATA INTO LOG FILE**
+**1. Load behavioural data into log file**
 
 Behavioural data (from stimulation) is loaded into dataframe (one row per trial), and split into 3 dataframes according to experimental sessions:
 
@@ -136,14 +136,14 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 * `log_recall` : recognition period
 * `log_rate` : rating period
 
-**2. DEFINE DETECTION VARIABLES (for analysis recognition phase)**
+**2. Define detection variables (for analysis recognition phase)**
 
-**3. ANALYSE MEMORY PERFORMANCE (recognition phase)**
+**3. Analyse memory performance (recognition phase)**
 
 
 ## `0303_INCASI_preprocess_b.Rmd`
 
-**1. PREPARE LONG DATAFRAME: `LOG_ENCODE`**
+**1. Prepare long dataframe: `LOG_ENCODE`**
 * Long df with one row per trial
 
 **1.A. Compute regression equation (*Weissler et al.,1968*) to determine pre-ejection period**
@@ -174,7 +174,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 **1.C. Additional variables (inter-individual variables, rating values) are added to the dataframe**
 
 
-**2. PREPARE SHORT DATA FRAME: `DATA_BINS`**
+**2. Prepare short data frame: `DATA_BINS`**
 * Short df with one row per participant
 
 
@@ -239,7 +239,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 ## MAIN ANALYSIS
 
-**1. ENCODING - CARDIAC INFLUENCE ON VISUAL SAMPLING**
+**1. Encoding - cardiac influence on visual sampling**
 
 **1.A. CIRCULAR ANALYSIS**
 
@@ -259,7 +259,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 * **1.B.3.** Plot results with ggplot (c.f. Manuscript *Figure 2.b*)
 
 
-**2. RECOGNITION - CARDIAC INFLUENCE ON RECOGNITION MEMORY**
+**2. Recognition - cardiac influence on recognition memory**
 
 **2.A. CIRCULAR ANALYSIS**
 
@@ -293,8 +293,8 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * **2.B.5.** Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
 
-  1) Add picture as random factor (m0_p, m1_p, m2_p)
-  2) Add individual ratings as fixed effect (m3, m4)
+  - Add picture as random factor (m0_p, m1_p, m2_p)
+  - Add individual ratings as fixed effect (m3, m4)
   
 
 ## SUPPLEMENTARY ANALYSES
@@ -303,9 +303,9 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * **1.A.** Prepare dataframe and include inter-individual differences
 
-    1) **Heart rate variability** (RMSSDl: log-transformed to mitigate skewedness and centred to the mean) 
-    2) **Trait Anxiety** (STAIz: z-transformed)
-    3) **Interoceptive Awareness** (IAz: z-transformed)
+  - **Heart rate variability** (RMSSDl: log-transformed to mitigate skewedness and centred to the mean) 
+  - **Trait Anxiety** (STAIz: z-transformed)
+  - **Interoceptive Awareness** (IAz: z-transformed)
 
 * **1.B.** Run correlations
 
@@ -329,8 +329,8 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * **3.B.** Run tests to compare normative vs. individual ratings 
 
-    1) Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
-    2) Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
+  - Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
+  - Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
 
 * **3.C.** Plot normative vs. individual ratings (c.f. Manuscript *Figure 5*)
 
@@ -359,8 +359,8 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 * **2.B.** Plot phase ranges and lengths (c.f. Manuscript *Figure S2*)
 
-    1) Cumulative frequency
-    2) Mean phase ranges for each participant (relative to R-peak)
+  - Cumulative frequency
+  - Mean phase ranges for each participant (relative to R-peak)
 
 
 # 4. REFERENCES
