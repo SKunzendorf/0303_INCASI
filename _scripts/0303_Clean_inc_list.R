@@ -4,7 +4,7 @@
 
 # 1. EXCLUDE SUBJECTS WITH HIGH HR
   # subjects with tachycardia (HR > 100/min) (inc_list[8,38] = inc11, inc41)
-  # calculate mean_HR for each subject
+  # calculate mean_HR for each subject during encoding period
   mean_HR <- tapply(log_encode$HR_1perMin, log_encode$vp, mean) 
 
   # find subjects with mHR >100
@@ -12,10 +12,44 @@
   inc_hyperHR <- inc_list[c(inc_hyperHR)] # exclude vps with high HR
 
 # 2. EXCLUDE SUBJECT WITH HYPERTONUS (HTN)
-  # 1 participant with HTN ("inc40", position 37)
-  inc_htn <- c(37)
-  inc_cuthtn <- inc_list[-inc_htn] 
+  #--------------------------------------------------------------------------
+  # boxplot bp
+  # boxplot(data_bp[,2:3])
   
+  # overview bp
+  # summary(bp$bpsys[bp$vp %in% inc_list]) #_clean
+  # sd(bp$bpsys[bp$vp %in% inc_list]) #_clean
+  # 
+  # summary(bp$bpdias[bp$vp %in% inc_list])
+  # sd(bp$bpdias[bp$vp %in% inc_list])
+  # 
+  # summary(data_bins$HR_1perMin)
+  # sd(data_bins$HR_1perMin)
+  
+  #--------------------------------------------------------------------------
+  # Remove outliers based on Tukey's rule
+  # IQR = Q3 - Q1 -> contains middle 50% of the data
+  
+  x <- data_bp$bpsys # systolic BP
+  iqr <- IQR(x) # interquartile range
+  quant <- quantile(x, probs=c(.25, .75)) # determine 25% and 75% quartile
+  H <- IQR(x)*1.5
+  
+  # Calculate lower limit
+  lower_limit <- as.numeric(quant[1] - H) # Q1 = 1st quartile: 25% of data <= this value
+  
+  # Calculate upper limit
+  upper_limit <- as.numeric(quant[2] + H) # Q3 = 3rd quartile: 25% of data >= this value
+  
+  # Retrive index of elements which are outliers
+  lower_index <- which(x < lower_limit)
+  upper_index <- which(x > upper_limit)
+  
+  idx_htn <- upper_index #  1 outlier ("inc40", position 37)
+  inc_htn <- inc_list[idx_htn] 
+  inc_cuthtn <- inc_list[-idx_htn]
+  #--------------------------------------------------------------------------
+
 # 3. clean inc list without non-physiologic states: without HYPER HR, HTN
   inc_clean <- as.factor(inc_list[-c(inc_hyperHR, inc_htn)])
 
