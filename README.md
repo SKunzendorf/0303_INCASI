@@ -88,38 +88,38 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 **1. T-template**
 
-  * ECG-template from Rpeak until **end of T-wave** is computed for each participant
-  * Systole end is defined by T-wave end in individual ECG-templates
+* ECG-template from Rpeak until **end of T-wave** is computed for each participant
+* Systole end is defined by T-wave end in individual ECG-templates
 
-* **1.A.** Create list of dataframes to prepare averaged ECG template for each subject
+  * **1.A.** Create list of dataframes to prepare averaged ECG template for each subject
 
-* **1.B.** Create averaged ECG template (containing RST waves) for each participant and crop out template part that contains T-wave
+  * **1.B.** Create averaged ECG template (containing RST waves) for each participant and crop out template part that contains T-wave
 
-* **1.C.** Compute Trapez area approach (*Vázquez-Seisdedos et al., 2011*): Create function to find end of T-wave in template
+  * **1.C.** Compute Trapez area approach (*Vázquez-Seisdedos et al., 2011*): Create function to find end of T-wave in template
 
-* **1.D.** Apply trapez_area function to find T-wave end in template
+  * **1.D.** Apply trapez_area function to find T-wave end in template
 
-* **1.E.** Compare t-template with actual ECG trace (check correlations and check visually)
+  * **1.E.** Compare t-template with actual ECG trace (check correlations and check visually)
 
 
 **2. Q-template**
 
-  * ECG-template from **Q-wave onset** until Rpeak for each participant
-  * Q-wave onset is needed as start point for the pre-ejection phase (PEP, determined by regression equation, see preprocessing_b, based on *Weissler et al., 1968*)
-  * The PEP is then substracted from the whole interval (Q-wave until T-wave end) to determine the systolic ejection period (see preprocessing_b)
+* ECG-template from **Q-wave onset** until Rpeak for each participant
+* Q-wave onset is needed as start point for the pre-ejection phase (PEP, determined by regression equation, see preprocessing_b, based on *Weissler et al., 1968*)
+* The PEP is then substracted from the whole interval (Q-wave until T-wave end) to determine the systolic ejection period (see preprocessing_b)
 
-* **2.A.** Create list of dataframes to prepare averaged ECG template for each subject
+  * **2.A.** Create list of dataframes to prepare averaged ECG template for each subject
 
-* **2.B.** Create averaged ECG template (containing QRST waves) for each participant and define interval from Q-wave onset until Rpeak
+  * **2.B.** Create averaged ECG template (containing QRST waves) for each participant and define interval from Q-wave onset until Rpeak
 
 
 **3. Overall check of defined cardiac intervals**
 
-  * Determined cardiac intervals (i.e., pre-ejection phase, ejection phase, from preprocessing_b) are needed for this step
+* Determined cardiac intervals (i.e., pre-ejection phase, ejection phase, from preprocessing_b) are needed for this step
 
-* **3.A.** Visual Check of systole template (systolic ejection-phase) in participants ECG templates
+  * **3.A.** Visual Check of systole template (systolic ejection-phase) in participants ECG templates
 
-* **3.B.** Visual Check of cardiac intervals in real ECGlead
+  * **3.B.** Visual Check of cardiac intervals in real ECGlead
 
 
 
@@ -283,19 +283,19 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
   * Model significance tested with Likelihood ratio tests (LRT)
 
-* **2.B.1.** Prepare dataframe for GLMM analysis
+    * **2.B.1.** Prepare dataframe for GLMM analysis
 
-* **2.B.2.** Compute overall mean recognition performance
+    * **2.B.2.** Compute overall mean recognition performance
 
-* **2.B.3.** Run models m0, m1
+    * **2.B.3.** Run models m0, m1
 
-* **2.B.4.** Run model m2
+    * **2.B.4.** Run model m2
 
-* **2.B.5.** Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
+    * **2.B.5.** Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
 
-  - Add picture as random factor (m0_p, m1_p, m2_p)
-  - Add individual ratings as fixed effect (m3, m4)
-  
+      - Add picture as random factor (m0_p, m1_p, m2_p)
+      - Add individual ratings as fixed effect (m3, m4)
+
 
 ## SUPPLEMENTARY ANALYSES
 
