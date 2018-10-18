@@ -91,15 +91,15 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 * ECG-template from Rpeak until **end of T-wave** is computed for each participant
 * Systole end is defined by T-wave end in individual ECG-templates
 
-**1.A.** Create list of dataframes to prepare averaged ECG template for each subject
+* **1.A.** Create list of dataframes to prepare averaged ECG template for each subject
 
-**1.B.** Create averaged ECG template (containing RST waves) for each participant and crop out template part that contains T-wave
+* **1.B.** Create averaged ECG template (containing RST waves) for each participant and crop out template part that contains T-wave
 
-**1.C.** Compute Trapez area approach (*Vázquez-Seisdedos et al., 2011*): Create function to find end of T-wave in template
+* **1.C.** Compute Trapez area approach (*Vázquez-Seisdedos et al., 2011*): Create function to find end of T-wave in template
 
-**1.D.** Apply trapez_area function to find T-wave end in template
+* **1.D.** Apply trapez_area function to find T-wave end in template
 
-**1.E.** Compare t-template with actual ECG trace (check correlations and check visually)
+* **1.E.** Compare t-template with actual ECG trace (check correlations and check visually)
 
 
 **2. Q-TEMPLATE**
@@ -108,18 +108,18 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 * Q-wave onset is needed as start point for the pre-ejection phase (PEP, determined by regression equation, see preprocessing_b, based on *Weissler et al., 1968*)
 * The PEP is then substracted from the whole interval (Q-wave until T-wave end) to determine the systolic ejection period (see preprocessing_b)
 
-**2.A.** Create list of dataframes to prepare averaged ECG template for each subject
+* **2.A.** Create list of dataframes to prepare averaged ECG template for each subject
 
-**2.B.** Create averaged ECG template (containing QRST waves) for each participant and define interval from Q-wave onset until Rpeak
+* **2.B.** Create averaged ECG template (containing QRST waves) for each participant and define interval from Q-wave onset until Rpeak
 
 
 **3. OVERALL CHECK OF DEFINED CARDIAC INTERVALS**
 
 * Determined cardiac intervals (i.e., pre-ejection phase, ejection phase, from preprocessing_b) are needed for this step
 
-**3.A.** Visual Check of systole template (systolic ejection-phase) in participants ECG templates
+* **3.A.** Visual Check of systole template (systolic ejection-phase) in participants ECG templates
 
-**3.B.** Visual Check of cardiac intervals in real ECGlead
+* **3.B.** Visual Check of cardiac intervals in real ECGlead
 
 
 
@@ -146,32 +146,32 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 **1. PREPARE LONG DATAFRAME: `LOG_ENCODE`**
 * Long df with one row per trial
 
-**1.A.** Compute regression equation (*Weissler et al.,1968*) to determine pre-ejection period
+**1.A. Compute regression equation (*Weissler et al.,1968*) to determine pre-ejection period**
 
 
-**1.B.** Analysis of behavior relative to the heartbeat
+* **1.B.** Analysis of behavior relative to the heartbeat
 
 
-**1.B.1.** For each key press, define the relative timepoint within the R-R interval, the R-R interval length, and the respective heart rate 
+* **1.B.1.** For each key press, define the relative timepoint within the R-R interval, the R-R interval length, and the respective heart rate 
 
 * The relative phase of each key press (i.e. picture onset) is computed within the cardiac cycle, indicated in the ECG as the interval between the previous and the following R peak 
 
-**1.B.2.** For each key press, define the circular onset and cardiac phase (cf. Manuscript *Figure 2*)
+* **1.B.2.** For each key press, define the circular onset and cardiac phase (cf. Manuscript *Figure 2*)
 
-1. **Circular analysis**: to exploit the oscillatory (repeating cycle of cardiac events) character of the heartbeat
+  1) **Circular analysis**: to exploit the oscillatory (repeating cycle of cardiac events) character of the heartbeat
 
   - According to its relative timing within this R-R interval, radian values between 0 and 2π are assigned to each stimulus (*Ohl et al., 2016; Pikovsky, Rosenblum, & Kurths, 2003; Schäfer, Rosenblum, Kurths, & Abel, 1998*). 
 
-2. **Binary analysis**: to exploit the phasic (two distinct cardiac phases: systole and diastole) character of the heartbeat
+  2) **Binary analysis**: to exploit the phasic (two distinct cardiac phases: systole and diastole) character of the heartbeat
 
   - To account for inter-individual differences in cardiac phase lengths, participant-specific phases are computed based on the ECG (for detailed description of the binning procedure cf. Manuscript *Supplementary Methods*)
   - Picture onsets are binned into either individual systole, diastole, or non-defined cardiac phases (pre-ejection period, 50ms security window between end of stystole and start of diastole)
 
 
-**1.B.3.** Recognition (hits, misses) is defined relative to the cardiac phase (systole, diastole) of picture onset in encoding
+* **1.B.3.** Recognition (hits, misses) is defined relative to the cardiac phase (systole, diastole) of picture onset in encoding
 
 
-**1.C.** Additional variables (inter-individual variables, rating values) are added to the dataframe
+**1.C. Additional variables (inter-individual variables, rating values) are added to the dataframe**
 
 
 **2. PREPARE SHORT DATA FRAME: `DATA_BINS`**
@@ -195,14 +195,14 @@ circ_click(x, val = "all_val", ray1 = F, plot1 = F, H_rad1 = F, mean1 = F, ray2 
 * **val**: "all_val" = default mode: run over all valences
   - for specific valence specify val = "positiv", val = "negativ", val = "neutral"
 
-1. level analyis (within-subject)
+**1. level analyis (within-subject)**
 default mode `= F`, select variables to be computed by writing `= T`:
 * **ray1**: table with results of rayleigh test, dip test
 * **plot1**: draw circular plot (c.f. `0303_INCASI_analysis.Rmd`, 1.A.1)
 * **H_rad1**: circular values of 120 trials
 * **mean1**: mean of circular
 
-2. level analyis (group-level)
+**2. level analyis (group-level)**
 * **ray2**: result rayleigh test
 * **plot2**: circular plot (c.f. `0303_INCASI_analysis.Rmd`, 1.A.2)
 * **H_rad2**: circular values of participant means 
@@ -241,7 +241,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **1. ENCODING - CARDIAC INFLUENCE ON VISUAL SAMPLING**
 
-**1.A.** CIRCULAR ANALYSIS
+**1.A. CIRCULAR ANALYSIS**
 
 * **1.A.1.** Exemplary participant-level analysis (c.f. Manuscript *Figure 1.b.*)
 
@@ -250,7 +250,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 * **1.A.3.** Bootstrapping analysis (c.f. Manuscript *Figure 2.a*)
 
 
-**1.B.** BINARY ANALYSIS
+**1.B. BINARY ANALYSIS**
 
 * **1.B.1.** Define ratios for both phases (systole, diastole)
 
@@ -261,14 +261,14 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **2. RECOGNITION - CARDIAC INFLUENCE ON RECOGNITION MEMORY**
 
-**2.A.** CIRCULAR ANALYSIS
+**2.A. CIRCULAR ANALYSIS**
 
 * **2.A.1.** Exemplary participant-level analysis 
 
 * **2.A.2.** Group-level analysis
 
 
-**2.B.** BINARY ANALYSIS
+**2.B.BINARY ANALYSIS**
 
 * General Linear mixed models (GLMMs) for binomial data with subject as random factor (c.f. Manuscript *Table 1*)
   - **m0**: recognition memory ~ 1 + (1|subject)
