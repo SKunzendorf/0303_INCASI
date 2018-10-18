@@ -1,4 +1,4 @@
-# Active vision varies across the cardiac cycle
+# Active information sampling varies across the cardiac cycle
 
 **Authors:**
 Stella Kunzendorf <sup>1,2</sup> , Felix Klotzsche <sup>2,3</sup> , Mert Akbal <sup>2</sup> , 
@@ -90,34 +90,39 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 **1. T-TEMPLATE**
 
-* ECG-template from Rpeak until **end of t-wave** is computed for each participant
-* Systole end is defined by t-wave end in individual ECG-templates
+* ECG-template from Rpeak until **end of 
 
-**1.A.** Create list of dataframes to prepare averaged ECG template
 
-**1.B.** Create averaged ECG template for each participant and crop out template part that contains t-wave
 
-**1.C.** Compute Trapez area approach (*Vázquez-Seisdedos et al., 2011*): Create function to find end of t-wave in template
 
-**1.D.** Apply trapez_area function to find t-wave end in template
+** is computed for each participant
+* Systole end is defined by T-wave end in individual ECG-templates
 
-**1.D.** Compare t-template with actual ecg trace (check correlations and check visually)
+**1.A.** Create list of dataframes to prepare averaged ECG template for each subject
+
+**1.B.** Create averaged ECG template (containing RST waves) for each participant and crop out template part that contains T-wave
+
+**1.C.** Compute Trapez area approach (*Vázquez-Seisdedos et al., 2011*): Create function to find end of T-wave in template
+
+**1.D.** Apply trapez_area function to find T-wave end in template
+
+**1.E.** Compare t-template with actual ECG trace (check correlations and check visually)
 
 
 **2. Q-TEMPLATE**
 
-* ECG-template from **q-wave onset** until Rpeak for each participant
-* q-wave onset is needed as start point for the pre-ejection phase (determined by regression equation, see preprocessing_b)
-* The pre-ejection phase is then substracted from the whole interval (q-wave until t-wave end) to determine the systolic ejection period (see preprocessing_b)
+* ECG-template from **Q-wave onset** until Rpeak for each participant
+* Q-wave onset is needed as start point for the pre-ejection phase (PEP, determined by regression equation, see preprocessing_b, based on *Weissler et al., 1968*)
+* The PEP is then substracted from the whole interval (Q-wave until T-wave end) to determine the systolic ejection period (see preprocessing_b)
 
-**2.A.** Create list of dataframes to prepare averaged ECG template 
+**2.A.** Create list of dataframes to prepare averaged ECG template for each subject
 
-**2.B.** Create averaged ECG template for each participant and define interval from q-wave onset until Rpeak
+**2.B.** Create averaged ECG template (containing QRST waves) for each participant and define interval from Q-wave onset until Rpeak
 
 
 **3. OVERALL CHECK OF DEFINED CARDIAC INTERVALS**
 
-* Determined cardiac intervals (from preprocessing_b) are needed for this step
+* Determined cardiac intervals (i.e., pre-ejection phase, ejection phase, from preprocessing_b) are needed for this step
 
 **3.A.** Visual Check of systole template (systolic ejection-phase) in participants ECG templates
 
@@ -152,7 +157,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 **1. PREPARE LONG DATAFRAME: `LOG_ENCODE`**
 * Long df with one row per trial
 
-**1.A.** Compute regression equation (*Weissler,1968*) to determine pre-ejection period
+**1.A.** Compute regression equation (*Weissler et al.,1968*) to determine pre-ejection period
 
 
 **1.B.** Analysis of behavior relative to the heartbeat
@@ -162,7 +167,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 
 * The relative phase of each key press (i.e. picture onset) is computed within the cardiac cycle, indicated in the ECG as the interval between the previous and the following R peak 
 
-**1.B.2.** For each key press, define the circular onset and cardiac phase (cf. Manuscript *Figure 2b*)
+**1.B.2.** For each key press, define the circular onset and cardiac phase (cf. Manuscript *Figure 2*)
 
 1. **Circular analysis**: to exploit the oscillatory (repeating cycle of cardiac events) character of the heartbeat
 
@@ -248,16 +253,16 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **1. ENCODING - CARDIAC INFLUENCE ON VISUAL SAMPLING**
 
-**1.A.** Circular analysis
+**1.A.** CIRCULAR ANALYSIS
 
-* 1.A.1. Exemplary participant-level analysis (c.f. Manuscript *Figure 2.b.*)
+* 1.A.1. Exemplary participant-level analysis (c.f. Manuscript *Figure 1.b.*)
 
 * 1.A.2. Group-level analysis
 
 * 1.A.3. Bootstrapping analysis (c.f. Manuscript *Figure 2.a*)
 
 
-**1.B.** Binary analysis
+**1.B.** BINARY ANALYSIS
 
 * 1.B.1 Define ratios for both phases (systole, diastole)
 
@@ -268,17 +273,19 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **2. RECOGNITION - CARDIAC INFLUENCE ON RECOGNITION MEMORY**
 
-**2.A.** Circular analysis
+**2.A.** CIRCULAR ANALYSIS
 
 * 2.A.1. Exemplary participant-level analysis 
 
 * 2.A.2. Group-level analysis
 
 
-**2.B.** Binary analysis: 
-* Linear mixed model (LMM) for binomial data with subject as random factor (c.f. Manuscript *Table 1*)
-  - **m0**: recognition memory ~ valence
-  - **m1**: recognition memory ~ valence * cardiac phase
+**2.B.** BINARY ANALYSIS
+
+* General Linear mixed models (GLMMs) for binomial data with subject as random factor (c.f. Manuscript *Table 1*)
+  - **m0**: recognition memory ~ 1 + (1|subject)
+  - **m1**: recognition memory ~ valence + (1|subject)
+  - **m1**: recognition memory ~ valence * cardiac phase + (1|subject) (main model of interest)
 
 * Dependent variable: recognition memory (coding: 0 = miss, 1 = hit) 
 * Independent within-subject variables:
@@ -286,33 +293,85 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
   - valence: three valence levels (positive, negative, neutral), contrast-coded with neutral as baseline condition:   
     positive-neutral, negative-neutral
 
+* Model significance tested with Likelihood ratio tests (LRT)
 
-#### SUPPLEMENTARY ANALYSIS
+* 2.B.1. Prepare dataframe for GLMM analysis
 
-**1. Correlation of recognition memory with covariates**
+* 2.B.2. Compute overall mean recognition performance
 
-**1.A.** Prepare dataframe and include additional variables (inter-individual differences)
+* 2.B.3. Run models m0, m1
 
-* **Heart rate variability** (rmssdl: log-transformed to mitigate skewedness and centred to the mean) 
-* **Trait Anxiety** (staiz: z-transformed)
+* 2.B.4. Run model m2
+
+* 2.B.5. Refine GLMM analyses (cf. Revision: Reviewer 2, comment #2)
+
+  1) Add picture as random factor
+  2) Add individual ratings as fixed effect
+  
+
+#### SUPPLEMENTARY ANALYSES
+
+**1. Correlation of self-paced sampling with inter-individual differences (cf. Revision: Reviewer 1, comment #1)
+
+**1.A.** Prepare dataframe and include inter-individual differences
+
+* **Heart rate variability** (RMSSDl: log-transformed to mitigate skewedness and centred to the mean) 
+* **Trait Anxiety** (STAIz: z-transformed)
 * **Interoceptive Awareness** (IAz: z-transformed)
 
-**1.B.** Run correlations mean recognition performance ~ covariate
+**1.B.** Run correlations
 
 **1.C.** Plot correlations (c.f. Manuscript *Figure 3*)
 
-**2. Analyse ratings: Subjective perception of picture emotionality (normative vs. individual ratings)**
 
-**2.A.** Normative and individual means of picture ratings for arousal and valence
+**2. Correlation of recognition memory with inter-individual differences**
 
-**2.B.** Run tests to compare normative vs. individual ratings 
+**2.A.** Prepare dataframe and include inter-individual differences (RMSSDl, STAIz, IAz, see above)
 
-* Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
-* Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
+**2.B.** Run correlations
 
-**2.C.** Plot normative vs. individual ratings (c.f. Manuscript *Figure 4*)
+**2.C.** Plot correlations (c.f. Manuscript *Figure 4*)
 
-**3.Analyse correlation of individual cardiac phases with heart rate (see Supplementary Methods)**
+
+**3. Analyse ratings: Subjective perception of picture emotionality (normative vs. individual ratings)**
+
+**3.A.** Normative and individual means of picture ratings for arousal and valence
+
+**3.B.** Run tests to compare normative vs. individual ratings 
+
+  1) Run mixed-design ANOVAs to test ratings across rating category (normative, individual) and valence
+  2) Run two-sided paired ttests for normative vs. individual arousal ratings across each valence level
+
+**3.C.** Plot normative vs. individual ratings (c.f. Manuscript *Figure 5*)
+
+
+**4. Test match of picture features (EmoPicS)**
+
+**4.A.** Test match of physical picture features (luminance, contrast, complexity)
+
+**4.B.** Test match of high-level picture features (person count, social interaction, close-ups, eye contact)
+
+
+#### SUPPLEMENTARY METHODS
+
+## 1. Correlations of individual systoles and heart rate (HR)
+
+**1.A.** Summary of cardiac phases relative to HR
+
+**1.B.** Test correlations 
+
+**1.C.** Plot correlations (c.f. Manuscript *Figure S1*)
+
+
+## 2. Ranges and lengths of cardiac phases
+
+**2.A.** Summary of cardiac phase ranges and lengths
+
+**2.B.** Plot phase ranges and lengths (c.f. Manuscript *Figure S2*)
+  
+  1) Cumulative frequency
+  2) Mean phase ranges for each participant (relative to R-peak)
+
 
 ## 4. REFERENCES
 
