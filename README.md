@@ -82,9 +82,9 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 # 3.1. Preprocessing
 
 
-### 3.1.1. Compute ECG-templates to prepare extraction of individual systole
+## 3.1.1. Compute ECG-templates to prepare extraction of individual systole
 
-### `templates_t_q.Rmd`
+## `templates_t_q.Rmd`
 
 *Script outline:*
 
@@ -131,9 +131,9 @@ The scripts are to be run in the following order. Preprocessing can be skipped s
 
 
 
-### 3.1.2. Prepare dataframes
+## 3.1.2. Prepare dataframes
 
-### `0303_INCASI_preprocess_a.Rmd`
+## `0303_INCASI_preprocess_a.Rmd`
 
 *Script outline:*
 
@@ -150,7 +150,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 **3. ANALYSE MEMORY PERFORMANCE (recognition phase)**
 
 
-### `0303_INCASI_preprocess_b.Rmd`
+## `0303_INCASI_preprocess_b.Rmd`
 
 *Script outline:*
 
@@ -193,7 +193,7 @@ Behavioural data (from stimulation) is loaded into dataframe (one row per trial)
 
 Functions to compute within-subject (1. level) and group-level (2. level) circular analysis.
 
-### `fx_circ_encoding.R`
+## `fx_circ_encoding.R`
 
 **Aim:** Create circular plots to show distribution of stimulus onsets relative to the cardiac cycle (encoding period)
 
@@ -226,7 +226,7 @@ Exemplary function input:
 
 ```circ_click("inc25", plot1 = T, ray1 = T)```
 
-### `fx_circ_recognition.R`
+## `fx_circ_recognition.R`
 
 **Aim:** Create circular plots to show distribution of stimulus onsets (encoding) for correctly (hits) and erroneously (misses) recognised pictures 
 
@@ -243,7 +243,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 # 3.3. Run analysis
 
-### `0303_INCASI_analysis.Rmd`
+## `0303_INCASI_analysis.Rmd`
 
 - **Caveat**: If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
 
