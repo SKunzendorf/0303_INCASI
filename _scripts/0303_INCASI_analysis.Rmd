@@ -161,7 +161,7 @@ source(paste(path_functions, "fx_standard_error.R", sep="")) # function to calcu
 # load clean inc_lists
 source(paste(path_scripts, "0303_Clean_inc_list.R", sep ="")) # load clean participant list
 
-inc_clean <- inc_clean[c(1:40)] # take only fist 40 participants out of clean inc list (to test with dataset of preregistration size)
+# inc_clean <- inc_clean[c(1:40)] # take only fist 40 participants out of clean inc list (to test with dataset of preregistration size)
 #--------------------------------------------------------------------------
 ```
 
