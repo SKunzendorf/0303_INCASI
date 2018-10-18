@@ -243,29 +243,29 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 
 **1.A.** CIRCULAR ANALYSIS
 
-* 1.A.1. Exemplary participant-level analysis (c.f. Manuscript *Figure 1.b.*)
+* **1.A.1.** Exemplary participant-level analysis (c.f. Manuscript *Figure 1.b.*)
 
-* 1.A.2. Group-level analysis
+* **1.A.2.** Group-level analysis
 
-* 1.A.3. Bootstrapping analysis (c.f. Manuscript *Figure 2.a*)
+* **1.A.3.** Bootstrapping analysis (c.f. Manuscript *Figure 2.a*)
 
 
 **1.B.** BINARY ANALYSIS
 
-* 1.B.1 Define ratios for both phases (systole, diastole)
+* **1.B.1.** Define ratios for both phases (systole, diastole)
 
-* 1.B.2 Run analysis: Compare systolic and diastolic ratio (paired t-test)
+* **1.B.2.** Run analysis: Compare systolic and diastolic ratio (paired t-test)
 
-* 1.B.3. Plot results with ggplot (c.f. Manuscript *Figure 2.b*)
+* **1.B.3.** Plot results with ggplot (c.f. Manuscript *Figure 2.b*)
 
 
 **2. RECOGNITION - CARDIAC INFLUENCE ON RECOGNITION MEMORY**
 
 **2.A.** CIRCULAR ANALYSIS
 
-* 2.A.1. Exemplary participant-level analysis 
+* **2.A.1.** Exemplary participant-level analysis 
 
-* 2.A.2. Group-level analysis
+* **2.A.2.** Group-level analysis
 
 
 **2.B.** BINARY ANALYSIS
