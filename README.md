@@ -237,7 +237,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 - **Caveat**: If you have done your own preprocessing (and you have the folder **0303_INCASI_data**), please change the parameter `use_own_preproc_data` in the setup chunk of `0303_INCASI_analysis.Rmd` to `TRUE`
 
 
-#### MAIN ANALYSIS
+## MAIN ANALYSIS
 
 **1. ENCODING - CARDIAC INFLUENCE ON VISUAL SAMPLING**
 
@@ -297,7 +297,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
   2) Add individual ratings as fixed effect (m3, m4)
   
 
-#### SUPPLEMENTARY ANALYSES
+## SUPPLEMENTARY ANALYSES
 
 **1. Correlation of self-paced sampling with inter-individual differences (cf. Revision: Reviewer 1, comment #1)**
 
@@ -340,9 +340,9 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 **4.B.** Test match of high-level picture features (person count, social interaction, close-ups, eye contact)
 
 
-#### SUPPLEMENTARY METHODS
+## SUPPLEMENTARY METHODS
 
-## 1. Correlations of individual systoles and heart rate (HR)
+**1. Correlations of individual systoles and heart rate (HR)**
 
 **1.A.** Summary of cardiac phases relative to HR
 
@@ -351,7 +351,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
 **1.C.** Plot correlations (c.f. Manuscript *Figure S1*)
 
 
-## 2. Ranges and lengths of cardiac phases
+**2. Ranges and lengths of cardiac phases**
 
 **2.A.** Summary of cardiac phase ranges and lengths
 
@@ -361,7 +361,7 @@ circ_click_mem(x, det = "hit_miss", val = "all_val", ray1 = F, plot1 = F, H_rad1
   2) Mean phase ranges for each participant (relative to R-peak)
 
 
-## 4. REFERENCES
+# 4. REFERENCES
 
 Delorme, A., & Makeig, S. (2004). EEGLAB: an open sorce toolbox for analysis of single trail EEG dynamics including independent component analysis. *Journal of Neuroscience Methods, 134*, 9–21. *[URL] (https://sccn.ucsd.edu/eeglab/download/eeglab_jnm03.pdf)*.
 
@@ -383,7 +383,7 @@ Vázquez-Seisdedos, C. R., Neto, J. E., Marañón Reyes, E. J., Klautau, A., de 
 Weissler, A. M., Harris, W. S., & Schoenfield, C. D. (1968). Systolic Time Intervals in Heart Failure in Man. *Circulation, 37(2)*, 149–159. Retrieved from *[URL] (http://circ.ahajournals.org/cgi/content/abstract/37/2/149)*
 
 
-## 5. License
+# 5. License
 
 This code is being released with a permissive open-source license. You should feel free to use or adapt this code as long as you follow the terms of the license, which are enumerated below. If you make use of or build on the computed functions and/or behavioural/ecg analyses, we would appreciate that you cite the paper.
 
